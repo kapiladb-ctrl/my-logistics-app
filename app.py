@@ -196,10 +196,10 @@ with main_right:
     conn.close()
 
     if rows:
-        subtotal = int(totals_row[0]) if totals_row[0] is not None else 0
-        total_sscl = int(totals_row[1]) if totals_row[1] is not None else 0
-        total_vat = int(totals_row[2]) if totals_row[2] is not None else 0
-        grand_final = int(totals_row[3]) if totals_row[3] is not None else 0
+        subtotal = int(totals_row) if totals_row is not None else 0
+        total_sscl = int(totals_row) if totals_row is not None else 0
+        total_vat = int(totals_row) if totals_row is not None else 0
+        grand_final = int(totals_row) if totals_row is not None else 0
 
         # VARIANT 1: VISUAL NATIVE FORM LOOK
         if output_choice == "Visual Invoice Sheet (Form Look)":
@@ -233,3 +233,4 @@ with main_right:
         else:
             export_raw_data = []
             for item in rows:
+                item_id, item_cat, item_name, item_base, item_sscl, item_vat, item_total = item
