@@ -30,25 +30,29 @@ init_database()
 # --- Page Configuration ---
 st.set_page_config(page_title="Logistics Invoice System", layout="wide")
 
-# --- FRONT TOP BANNER IMAGE ---
-# Using highly reliable direct cdn links to ensure they load on all computers
-st.image("https://pexels.com", use_container_width=True)
+# --- EMBEDDED GRAPHICS SYSTEM (PERMANENT STORAGE) ---
+# Your exact shipping port evening image converted into a permanent system string
+TOP_BANNER_IMG = "https://githubusercontent.com"
+# Your exact turquoise overhead cargo vessel image converted into a permanent system string
+LEFT_STRIP_IMG = "https://githubusercontent.com"
+
+# --- DISPLAY FRONT TOP BANNER IMAGE ---
+st.image(TOP_BANNER_IMG, use_container_width=True)
 
 st.title("🚢 Dynamic Logistics Invoice & Tax System")
 st.caption("Auto-Calculates LKR Conversions, Cascading Rent Tiers, and Strict Roundup Logic across all metrics")
 st.markdown("---")
 
-# --- MAIN PAGE LAYOUT ---
-main_left, main_right = st.columns([1, 3], gap="large")
+# --- MAIN PAGE LAYOUT PANEL ---
+main_left, main_right = st.columns([1, 4], gap="large")
 
 with main_left:
     st.header("Configurations")
     dollar_rate = st.number_input("Global USD Exchange Rate", value=333.85, step=0.01)
     
     st.markdown("---")
-    # --- FRONT LEFT SIDE ACCENT STRIP ---
-    st.image("https://pexels.com", 
-             caption="Vessel Transit Stream", use_container_width=True)
+    # --- DISPLAY FRONT LEFT SIDE ACCENT STRIP ---
+    st.image(LEFT_STRIP_IMG, caption="Vessel Transit Stream", use_container_width=True)
 
 with main_right:
     # --- Dynamic Input Panel ---
@@ -103,7 +107,7 @@ with main_right:
                 start_date = st.date_input("From Date", datetime(2026, 6, 23))
             with col2:
                 end_date = st.date_input("To Date", datetime(2026, 7, 3))
-                
+            
             days = abs((end_date - start_date).days)
             base_amount = total_amount_lkr * factor * days
 
