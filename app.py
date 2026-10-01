@@ -28,7 +28,7 @@ init_database()
 # --- Page Configuration ---
 st.set_page_config(page_title="Logistics Invoice System", layout="wide")
 st.title("🚢 Dynamic Logistics Invoice & Tax System")
-st.caption("Auto-Calculates LKR Conversions, SSCL Gross-Up Formulas, and 18% VAT with Strict Roundup Logic")
+st.caption("Auto-Calculates LKR Conversions, SSCL Gross-Up Formulas, and Conditional VAT Redistribution Logic")
 
 # --- Global Settings Sidebar ---
 st.sidebar.header("Global Configurations")
@@ -83,29 +83,31 @@ with st.form("invoice_form", clear_on_submit=True):
 
 # --- Process Calculations ---
 if submit_button:
-    has_vat = "NON VAT" not in category
+    is_vat_visible = "NON VAT" not in category
     
     # 1. Base Amount (Strictly Rounded Integer)
     amount_lkr = int(round(base_amount))
     
     # 2. SSCL Tax: Implements your exact ROUNDUP(Base/97.5*2.5, 0) logic
     sscl_raw = (base_amount / 97.5) * 2.5
-    sscl_tax = int(math.ceil(sscl_raw))  # math.ceil forces any decimal point forward (e.g. 85.01 -> 86)
+    sscl_tax = int(math.ceil(sscl_raw))
     
-    # 3. Cascading Tax Foundation Rule: VAT is charged on (Base + SSCL)
+    # 3. Cascading Tax Foundation Rule: VAT calculation happens regardless of visibility
     vat_base = amount_lkr + sscl_tax
-    vat_tax = int(math.ceil(vat_base * 0.18)) if has_vat else 0  # Also applies the ceil roundup for VAT decimal points
+    calculated_vat = int(math.ceil(vat_base * 0.18))
     
-    # 4. Net Final Grand Total
-    grand_total = amount_lkr + sscl_tax + vat_tax
+    # Apply your conditional visibility rule: 
+    # If NON-VAT, display 0 in the column, but add the calculated amount to the grand total.
+    vat_column_value = calculated_vat if is_vat_visible else 0
+    grand_total = amount_lkr + sscl_tax + calculated_vat
     
-    # Save to local session state database simulation
+    # Save to database simulation
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
     cursor.execute("""
         INSERT INTO invoices (category, charge_name, amount_lkr, sscl_tax, vat_tax, grand_total)
         VALUES (?, ?, ?, ?, ?, ?)
-    """, (category, charge_name, amount_lkr, sscl_tax, vat_tax, grand_total))
+    """, (category, charge_name, amount_lkr, sscl_tax, vat_column_value, grand_total))
     conn.commit()
     conn.close()
     st.success(f"Added successfully: {charge_name}")
@@ -127,8 +129,8 @@ if rows:
     table_data = []
     for r in rows:
         table_data.append({
-            "Row ID": r[0], "Category Class": r[1], "Charge Description": r[2],
-            "Base (LKR)": f"{r[3]:,}", "SSCL (2.5%)": f"{r[4]:,}", "VAT (18%)": f"{r[5]:,}", "Net Total": f"{r[6]:,}"
+            "Row ID": r, "Category Class": r, "Charge Description": r,
+            "Base (LKR)": f"{r:,}", "SSCL (2.5%)": f"{r:,}", "VAT (18%)": f"{r:,}", "Net Total": f"{r:,}"
         })
     st.dataframe(table_data, use_container_width=True)
 
@@ -136,10 +138,10 @@ if rows:
     st.markdown("---")
     st.subheader("3. Continuous Calculated Ledger Aggregates")
     
-    subtotal = totals[0] if totals[0] else 0
-    total_sscl = totals[1] if totals[1] else 0
-    total_vat = totals[2] if totals[2] else 0
-    grand_final = totals[3] if totals[3] else 0
+    subtotal = totals if totals else 0
+    total_sscl = totals if totals else 0
+    total_vat = totals if totals else 0
+    grand_final = totals if totals else 0
     
     col1, col2, col3, col4 = st.columns(4)
     col1.metric("Subtotal Amount", f"LKR {subtotal:,}")
@@ -156,4 +158,5 @@ if rows:
         st.rerun()
 else:
     st.info("The invoice sheet is currently empty. Input values above to generate automated spreadsheet matrix lines.")
+
 
