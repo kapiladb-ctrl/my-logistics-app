@@ -30,7 +30,7 @@ init_database()
 # --- Page Configuration ---
 st.set_page_config(page_title="Logistics Invoice System", layout="wide")
 st.title("🚢 Dynamic Logistics Invoice & Tax System")
-st.caption("Auto-Calculates LKR Conversions, SSCL Gross-Up Formulas, and Strict Roundup Logic across all metrics")
+st.caption("Auto-Calculates LKR Conversions, SSCL Gross-Up Formulas, and Strict安 Roundup Logic across all metrics")
 
 # --- Global Settings Sidebar ---
 st.sidebar.header("Global Configurations")
@@ -129,24 +129,36 @@ conn.close()
 
 if rows:
     table_data = []
-    export_raw_data = [] # Stores unformatted numbers cleanly for genuine Excel usage
+    export_raw_data = [] 
     
     for r in rows:
-        val_base = int(r) if r is not None else 0
-        val_sscl = int(r) if r is not None else 0
-        val_vat  = int(r) if r is not None else 0
-        val_tot  = int(r) if r is not None else 0
+        # Correctly pointing to positions within the database row tuple:
+        # r[0]=ID, r[1]=Category, r[2]=Description, r[3]=Base, r[4]=SSCL, r[5]=VAT, r[6]=Grand Total
+        val_base = int(r[3]) if r[3] is not None else 0
+        val_sscl = int(r[4]) if r[4] is not None else 0
+        val_vat  = int(r[5]) if r[5] is not None else 0
+        val_tot  = int(r[6]) if r[6] is not None else 0
         
         # Display variant (with text commas)
         table_data.append({
-            "Row ID": r, "Category Class": r, "Charge Description": r,
-            "Base (LKR)": f"{val_base:,}", "SSCL (2.5%)": f"{val_sscl:,}", "VAT (18%)": f"{val_vat:,}", "Net Total": f"{val_tot:,}"
+            "Row ID": r[0], 
+            "Category Class": r[1], 
+            "Charge Description": r[2],
+            "Base (LKR)": f"{val_base:,}", 
+            "SSCL (2.5%)": f"{val_sscl:,}", 
+            "VAT (18%)": f"{val_vat:,}", 
+            "Net Total": f"{val_tot:,}"
         })
         
-        # Export variant (pure integers so Excel formulas can sum them easily)
+        # Export variant (pure integers for clean Excel math)
         export_raw_data.append({
-            "Row ID": r, "Category Classification": r, "Description": r,
-            "Base Amount (LKR)": val_base, "SSCL (2.5%)": val_sscl, "VAT (18%)": val_vat, "Grand Total (LKR)": val_tot
+            "Row ID": r[0], 
+            "Category Classification": r[1], 
+            "Description": r[2],
+            "Base Amount (LKR)": val_base, 
+            "SSCL (2.5%)": val_sscl, 
+            "VAT (18%)": val_vat, 
+            "Grand Total (LKR)": val_tot
         })
         
     st.dataframe(table_data, use_container_width=True)
@@ -161,7 +173,7 @@ if rows:
     buffer.seek(0)
 
     # Action Toolbar Buttons
-    col_dl, col_clear = st.columns([1, 5])
+    col_dl, col_clear = st.columns(2)
     with col_dl:
         st.download_button(
             label="📥 Export to Excel",
@@ -174,10 +186,10 @@ if rows:
     st.markdown("---")
     st.subheader("3. Continuous Calculated Ledger Aggregates")
     
-    subtotal = int(totals_row) if totals_row and totals_row is not None else 0
-    total_sscl = int(totals_row) if totals_row and totals_row is not None else 0
-    total_vat = int(totals_row) if totals_row and totals_row is not None else 0
-    grand_final = int(totals_row) if totals_row and totals_row is not None else 0
+    subtotal = int(totals_row[0]) if totals_row and totals_row[0] is not None else 0
+    total_sscl = int(totals_row[1]) if totals_row and totals_row[1] is not None else 0
+    total_vat = int(totals_row[2]) if totals_row and totals_row[2] is not None else 0
+    grand_final = int(totals_row[3]) if totals_row and totals_row[3] is not None else 0
     
     col1, col2, col3, col4 = st.columns(4)
     col1.metric("Subtotal Amount", f"LKR {subtotal:,}")
@@ -195,3 +207,4 @@ if rows:
             st.rerun()
 else:
     st.info("The invoice sheet is currently empty. Input values above to generate automated spreadsheet matrix lines.")
+
