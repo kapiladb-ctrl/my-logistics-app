@@ -56,7 +56,6 @@ if not st.session_state["authenticated"]:
 #                         MAIN APPLICATION ENGINE
 # =====================================================================
 
-# --- File extension scanning motor ---
 all_files = os.listdir(".") if os.path.exists(".") else []
 top_banner_file = None
 left_strip_file = None
@@ -74,12 +73,10 @@ st.title("🚢 SLPA Customs Tax Invoice Generation Engine")
 st.markdown("---")
 
 # --- TWO COLUMN APP FRAME WORK ---
-main_left, main_right = st.columns([1, 3], gap="large")
+main_left, main_right = st.columns([1, 2], gap="large")
 
 with main_left:
     st.header("📋 Header Metadata")
-    
-    # Invoice Header fields from your image template
     serial_no = st.text_input("Serial No", value="29258")
     purchaser_tin = st.text_input("Purchases TIN", value="103252347")
     purchaser_name = st.text_input("Purchases Name", value="M/S. LANKA INTERNATIONAL PORT PVT LTD")
@@ -190,10 +187,9 @@ with main_right:
         total_vat = int(totals_row[2]) if totals_row[2] is not None else 0
         grand_final = int(totals_row[3]) if totals_row[3] is not None else 0
 
-        # VARIANT 1: VISUAL INVOICE FORM (Exactly matching your submitted image style)
+        # VARIANT 1: VISUAL INVOICE FORM (Matching your submitted image style)
         if output_choice == "Visual Invoice Sheet (Form Look)":
-            st.markdown(
-                f"""
+            st.markdown(f"""
                 <div style="background-color: white; padding: 30px; border: 2px solid #333; color: black; font-family: monospace;">
                     <div style="text-align: center; font-size: 22px; font-weight: bold; text-decoration: underline; margin-bottom: 20px;">Tax Invoice</div>
                     <table style="width: 100%; border: none; color: black; font-size: 14px; margin-bottom: 20px;">
@@ -207,16 +203,15 @@ with main_right:
                             <th style="padding: 8px; text-align: left;">Description of Goods or Services</th>
                             <th style="padding: 8px;">Amount Excluding VAT (Rs.)</th>
                         </tr>
-                """, unsafe_html=True
-            )
+            """, unsafe_html=True)
+            
             for r in rows:
-                st.markdown(
-                    f"""
+                st.markdown(f"""
                         <tr style="border-bottom: 1px solid #ddd;">
                             <td style="padding: 8px; text-align: left;">{r[2]} ({r[1]})</td>
                             <td style="padding: 8px;">{int(r[3]):,}</td>
                         </tr>
-                    """, unsafe_html=True
-                )
-            st.markdown(
-                f"""
+                """, unsafe_html=True)
+                
+            st.markdown(f"""
+                        <tr style="border-top: 2px solid black; font-weight: bold;">
