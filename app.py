@@ -30,7 +30,7 @@ init_database()
 # --- Page Configuration ---
 st.set_page_config(page_title="Logistics Invoice System", layout="wide")
 st.title("🚢 Dynamic Logistics Invoice & Tax System")
-st.caption("Auto-Calculates LKR Conversions, SSCL Gross-Up Formulas, and Strict Roundup Logic across all metrics")
+st.caption("Auto-Calculates LKR Conversions, Cascading Rent Tiers, and Strict Roundup Logic across all metrics")
 
 # --- Global Settings Sidebar ---
 st.sidebar.header("Global Configurations")
@@ -49,7 +49,6 @@ category = st.selectbox("Select Billing Category", [
 
 # Dynamically change input boxes based on category selection
 with st.form("invoice_form", clear_on_submit=True):
-    # Setup for standard row calculations
     if "Amendment" in category or "DC PENALTY" in category or "Pass Cancellation" in category:
         if "Amendment" in category:
             default_name = "Ammendment charge"
@@ -64,42 +63,20 @@ with st.form("invoice_form", clear_on_submit=True):
         charge_name = st.text_input("Charge Description", value=default_name)
         charge_rate = st.number_input("Charge Rate ($)", value=default_rate)
         items = st.number_input("Item Count / Qty", value=1, step=1)
-        
-        # Calculate Base
         base_amount = charge_rate * items * dollar_rate
 
-    # Setup for the newly redesigned Grouped Wharf Handling calculations
     elif "Wharf Rent" in category:
         charge_name = st.text_input("Invoice Group Identifier", value="Wharf Handling Charge Block")
-        st.markdown("#### Grouped Sub-Line Item Parameters")
+        st.markdown("#### Automated Wharf Handling & Rent Tier Parameters")
         
-        col1, col2, col3, col4 = st.columns(4)
-        
+        col1, col2 = st.columns(2)
         with col1:
-            st.markdown("**1. Handling Charges**")
-            hc_charge = st.number_input("Handling Charge ($)", value=64.0)
-            hc_item = st.number_input("Handling Qty", value=1, step=1)
-            
+            total_basic_dates = st.number_input("Enter Total Basic Dates/Days (e.g., 127)", value=127, step=1)
+            hc_charge = st.number_input("Handling Charge Base ($)", value=64.0)
         with col2:
-            st.markdown("**2. Basic Rent**")
-            br_gp = st.number_input("Basic GP", value=16.0)
-            br_dates = st.number_input("Basic Dates", value=127, step=1)
-            br_charge = st.number_input("Basic Charge ($)", value=1.0)
-            br_item = st.number_input("Basic Qty", value=1, step=1)
-            
-        with col3:
-            st.markdown("**3. PNL 1 Rent**")
-            p1_gp = st.number_input("PNL 1 GP", value=30.0)
-            p1_dates = st.number_input("PNL 1 Dates", value=7, step=1)
-            p1_charge = st.number_input("PNL 1 Charge ($)", value=1.0)
-            p1_item = st.number_input("PNL 1 Qty", value=1, step=1)
-            
-        with col4:
-            st.markdown("**4. PNL 2 Rent**")
-            p2_gp = st.number_input("PNL 2 GP", value=46.0)
-            p2_dates = st.number_input("PNL 2 Dates", value=113, step=1)
-            p2_charge = st.number_input("PNL 2 Charge ($)", value=1.0)
-            p2_item = st.number_input("PNL 2 Qty", value=1, step=1)
+            br_gp = st.number_input("Basic Rent Factor (GP Multiplier)", value=16.0)
+            p1_gp = st.number_input("PNL 1 Factor (Multiplier)", value=30.0)
+            p2_gp = st.number_input("PNL 2 Factor (Multiplier)", value=46.0)
 
     elif "Administrative" in category:
         charge_name = st.text_input("Description", value="Penalty Charge")
@@ -122,30 +99,39 @@ if submit_button:
     is_vat_visible = "NON VAT" not in category
     
     if "Wharf Rent" in category:
-        # 1. Calculate each row using strict math.ceil roundup logic separately
-        amt_hc = int(math.ceil(hc_charge * hc_item * dollar_rate))
-        amt_br = int(math.ceil(br_gp * br_dates * br_charge * br_item * dollar_rate))
-        amt_p1 = int(math.ceil(p1_gp * p1_dates * p1_charge * p1_item * dollar_rate))
-        amt_p2 = int(math.ceil(p2_gp * p2_dates * p2_charge * p2_item * dollar_rate))
+        # --- AUTOMATED RENT DAY BREAKDOWN LOGIC ---
+        # 1. Handling Charges (Fixed Qty 1)
+        amt_hc = int(math.ceil(hc_charge * 1 * dollar_rate))
         
-        # 2. Combine base amounts to exactly mimic your subtotal column (2,505,213 LKR)
+        # 2. Basic Rent (Uses the total days entered directly)
+        amt_br = int(math.ceil(br_gp * total_basic_dates * 1 * 1 * dollar_rate))
+        
+        # 3. PNL 1 Rent (Locked to exactly 7 days if total dates > 7)
+        p1_days = 7 if total_basic_dates > 7 else max(0, total_basic_dates)
+        amt_p1 = int(math.ceil(p1_gp * p1_days * 1 * 1 * dollar_rate))
+        
+        # 4. PNL 2 Rent (Automatically extracts remaining days: Basic Dates - 14)
+        p2_days = max(0, total_basic_dates - 14)
+        amt_p2 = int(math.ceil(p2_gp * p2_days * 1 * 1 * dollar_rate))
+        
+        # Combine the four lines to create the complete subtotal base amount
         amount_lkr = amt_hc + amt_br + amt_p1 + amt_p2
         
-        # 3. Calculate the cumulative grossed up SSCL (2.5%) based on the total subtotal
+        # Calculate grossed up SSCL (2.5%) based on the total combined base
         sscl_raw = (amount_lkr / 97.5) * 2.5
-        sscl_tax = int(math.ceil(sscl_raw)) # Pushes exactly to 64,237 LKR
+        sscl_tax = int(math.ceil(sscl_raw))
         
     else:
-        # Standard row-by-row math engine
+        # Standard row processing logic
         amount_lkr = int(math.ceil(base_amount))
         sscl_raw = (base_amount / 97.5) * 2.5
         sscl_tax = int(math.ceil(sscl_raw))
         
-    # 4. Cascading Tax Rule: VAT calculation base = Amount + SSCL
+    # Cascading Tax Rule: VAT Base = Base Amount + SSCL Tax
     vat_base = amount_lkr + sscl_tax
     calculated_vat = int(math.ceil(vat_base * 0.18))
     
-    # 5. Apply conditional column visibility logic
+    # Apply visibility rules for NON-VAT
     vat_column_value = calculated_vat if is_vat_visible else 0
     grand_total = amount_lkr + sscl_tax + calculated_vat
     
@@ -184,30 +170,18 @@ if rows:
         val_tot  = int(r) if r is not None else 0
         
         table_data.append({
-            "Row ID": r, 
-            "Category Class": r, 
-            "Charge Description": r,
-            "Base (LKR)": f"{val_base:,}", 
-            "SSCL (2.5%)": f"{val_sscl:,}", 
-            "VAT (18%)": f"{val_vat:,}", 
-            "Net Total": f"{val_tot:,}"
+            "Row ID": r, "Category Class": r, "Charge Description": r,
+            "Base (LKR)": f"{val_base:,}", "SSCL (2.5%)": f"{val_sscl:,}", "VAT (18%)": f"{val_vat:,}", "Net Total": f"{val_tot:,}"
         })
         
         export_raw_data.append({
-            "Row ID": r, 
-            "Category Classification": r, 
-            "Description": r,
-            "Base Amount (LKR)": val_base, 
-            "SSCL (2.5%)": val_sscl, 
-            "VAT (18%)": val_vat, 
-            "Grand Total (LKR)": val_tot
+            "Row ID": r, "Category Classification": r, "Description": r,
+            "Base Amount (LKR)": val_base, "SSCL (2.5%)": val_sscl, "VAT (18%)": val_vat, "Grand Total (LKR)": val_tot
         })
         
     st.dataframe(table_data, use_container_width=True)
 
-    # Convert dataset to pandas to prepare memory streaming export
     df_export = pd.DataFrame(export_raw_data)
-    
     buffer = io.BytesIO()
     with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
         df_export.to_excel(writer, index=False, sheet_name='Logistics Ledger')
@@ -248,6 +222,7 @@ if rows:
             st.rerun()
 else:
     st.info("The invoice sheet is currently empty. Input values above to generate automated spreadsheet matrix lines.")
+
 
 
 
