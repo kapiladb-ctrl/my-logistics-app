@@ -195,11 +195,17 @@ cursor.execute("SELECT SUM(amount_lkr), SUM(sscl_tax), SUM(vat_tax), SUM(grand_t
 totals_row = cursor.fetchone()
 conn.close()
 
-# Bulletproof check: Extracts each index position safely and defaults to 0 if empty
-subtotal = int(totals_row[0]) if totals_row and totals_row[0] is not None else 0
-total_sscl = int(totals_row[1]) if totals_row and totals_row[1] is not None else 0
-total_vat = int(totals_row[2]) if totals_row and totals_row is not None else 0
-grand_final = int(totals_row[3]) if totals_row and totals_row[3] is not None else 0
+# Safe Extraction Defaults
+subtotal = 0
+total_sscl = 0
+total_vat = 0
+grand_final = 0
+
+if totals_row and len(totals_row) == 4:
+    subtotal = int(totals_row[0]) if totals_row[0] is not None else 0
+    total_sscl = int(totals_row[1]) if totals_row[1] is not None else 0
+    total_vat = int(totals_row[2]) if totals_row[2] is not None else 0
+    grand_final = int(totals_row[3]) if totals_row[3] is not None else 0
 
 if rows:
     # VARIANT 1: VISUAL NATIVE FORM LOOK
@@ -209,11 +215,12 @@ if rows:
         st.write(f"**Billing Address:** {purchaser_addr}")
         
         table_data = []
-        for item in rows:
-            item_id, item_cat, item_name, item_base, item_sscl, item_vat, item_total = item
+        for row in rows:
+            # Native Named Unpacking - Eliminates missing bracket vulnerabilities completely
+            r_id, r_cat, r_name, r_base, r_sscl, r_vat, r_tot = row
             table_data.append({
-                "Description of Goods or Services": f"{item_name} ({item_cat})",
-                "Amount Excluding VAT (Rs.)": f"{int(item_base):,}.00"
+                "Description of Goods or Services": f"{r_name} ({r_cat})",
+                "Amount Excluding VAT (Rs.)": f"{int(r_base):,}.00"
             })
         st.table(table_data)
         
@@ -233,6 +240,4 @@ if rows:
     # VARIANT 2: RAW EXCEL DOWNLOAD
     else:
         export_raw_data = []
-        for item in rows:
-            item_id, item_cat, item_name, item_base, item_sscl, item_vat, item_total = item
-            export_raw_data.append({
+        for row in rows:
