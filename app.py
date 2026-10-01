@@ -195,12 +195,13 @@ with main_right:
     totals_row = cursor.fetchone()
     conn.close()
 
-    if rows:
-        subtotal = int(totals_row) if totals_row is not None else 0
-        total_sscl = int(totals_row) if totals_row is not None else 0
-        total_vat = int(totals_row) if totals_row is not None else 0
-        grand_final = int(totals_row) if totals_row is not None else 0
+    # Smart fallback to 0 if database returns empty sums (None)
+    subtotal = int(totals_row[0]) if totals_row and totals_row[0] is not None else 0
+    total_sscl = int(totals_row[1]) if totals_row and totals_row[1] is not None else 0
+    total_vat = int(totals_row[2]) if totals_row and totals_row is not None else 0
+    grand_final = int(totals_row[3]) if totals_row and totals_row is not None else 0
 
+    if rows:
         # VARIANT 1: VISUAL NATIVE FORM LOOK
         if output_choice == "Visual Invoice Sheet (Form Look)":
             st.info(f"📄 **TAX INVOICE** | Serial No: {serial_no} | Purchases TIN: {purchaser_tin}")
@@ -232,5 +233,3 @@ with main_right:
         # VARIANT 2: RAW EXCEL DOWNLOAD
         else:
             export_raw_data = []
-            for item in rows:
-                item_id, item_cat, item_name, item_base, item_sscl, item_vat, item_total = item
