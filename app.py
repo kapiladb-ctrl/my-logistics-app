@@ -31,6 +31,37 @@ init_database()
 # --- Page Configuration ---
 st.set_page_config(page_title="Logistics Invoice System", layout="wide")
 
+# =====================================================================
+#                         SIMPLE PASSWORD LOGIN SCREEN
+# =====================================================================
+# You can change 'Logistics2026' below to any custom password you want!
+CORRECT_PASSWORD = "Logistics2026"
+
+if "authenticated" not in st.session_state:
+    st.session_state["authenticated"] = False
+
+if not st.session_state["authenticated"]:
+    # Display clean login container box
+    st.markdown("## 🔒 System Security Gate")
+    st.info("This enterprise logistics engine is protected. Enter credentials below to access calculations.")
+    
+    with st.form("login_form"):
+        user_password = st.text_input("Enter System Password", type="password")
+        login_submitted = st.form_submit_button("🔓 Access System")
+        
+        if login_submitted:
+            if user_password == CORRECT_PASSWORD:
+                st.session_state["authenticated"] = True
+                st.success("Access Granted! Loading ledger panels...")
+                st.rerun()
+            else:
+                st.error("Incorrect password. Please try again.")
+    st.stop() # Halts the rest of the file from running until the user logs in
+
+# =====================================================================
+#                MAIN SYSTEM LAYOUT (ONLY RUNS AFTER LOGIN)
+# =====================================================================
+
 # --- FILE EXTENSION SCANNING MOTOR ---
 all_files = os.listdir(".") if os.path.exists(".") else []
 top_banner_file = None
@@ -44,7 +75,6 @@ for f in all_files:
         left_strip_file = f
 
 # --- DISPLAY SYSTEM NAME & BANNER IMAGE ---
-# The title and caption will now always load beautifully first so they are never hidden by images!
 st.title("🚢 Dynamic Logistics Invoice & Tax System")
 st.caption("Auto-Calculates LKR Conversions, Cascading Rent Tiers, and Strict Roundup Logic across all metrics")
 
@@ -67,6 +97,11 @@ with main_left:
         st.image(left_strip_file, caption="Vessel Transit Stream", use_container_width=True)
     else:
         st.success("⚓ **Vessel Transit Active**\n\nContinuous calculation engine ready.")
+        
+    st.markdown("---")
+    if st.button("🔒 Log Out"):
+        st.session_state["authenticated"] = False
+        st.rerun()
 
 with main_right:
     # --- Dynamic Input Panel ---
@@ -173,7 +208,6 @@ cursor = conn.cursor()
 cursor.execute("SELECT * FROM invoices")
 rows = cursor.fetchall()
 
-# Calculate totals safely with fallback values
 cursor.execute("SELECT SUM(amount_lkr), SUM(sscl_tax), SUM(vat_tax), SUM(grand_total) FROM invoices")
 totals_row = cursor.fetchone()
 conn.close()
@@ -225,28 +259,3 @@ if rows:
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
 
-    # --- Live Summary Blocks Ribbon ---
-    st.markdown("---")
-    st.subheader("3. Continuous Calculated Ledger Aggregates")
-    
-    subtotal = int(totals_row[0]) if totals_row and totals_row[0] is not None else 0
-    total_sscl = int(totals_row[1]) if totals_row and totals_row[1] is not None else 0
-    total_vat = int(totals_row[2]) if totals_row and totals_row[2] is not None else 0
-    grand_final = int(totals_row[3]) if totals_row and totals_row[3] is not None else 0
-    
-    col1, col2, col3, col4 = st.columns(4)
-    col1.metric("Subtotal Amount", f"LKR {subtotal:,}")
-    col2.metric("Total SSCL (2.5%)", f"LKR {total_sscl:,}")
-    col3.metric("Total VAT (18%)", f"LKR {total_vat:,}")
-    col4.metric("GRAND TOTAL RECEIVABLE", f"LKR {grand_final:,}")
-    
-    with col_clear:
-        if st.button("🗑️ Clear Ledger Sheet"):
-            conn = sqlite3.connect(DB_NAME)
-            cursor = conn.cursor()
-            cursor.execute("DELETE FROM invoices")
-            conn.commit()
-            conn.close()
-            st.rerun()
-else:
-    st.info("The invoice sheet is currently empty. Input values above to generate automated spreadsheet matrix lines.")
