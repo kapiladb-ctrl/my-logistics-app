@@ -100,29 +100,29 @@ if submit_button:
     
     if "Wharf Rent" in category:
         # --- AUTOMATED RENT DAY BREAKDOWN LOGIC ---
-        # 1. Handling Charges (Fixed Qty 1)
+        # 1. Handling Charges
         amt_hc = int(math.ceil(hc_charge * 1 * dollar_rate))
         
-        # 2. Basic Rent (Uses the total days entered directly)
+        # 2. Basic Rent
         amt_br = int(math.ceil(br_gp * total_basic_dates * 1 * 1 * dollar_rate))
         
-        # 3. PNL 1 Rent (Locked to exactly 7 days if total dates > 7)
+        # 3. PNL 1 Rent
         p1_days = 7 if total_basic_dates > 7 else max(0, total_basic_dates)
         amt_p1 = int(math.ceil(p1_gp * p1_days * 1 * 1 * dollar_rate))
         
-        # 4. PNL 2 Rent (Automatically extracts remaining days: Basic Dates - 14)
+        # 4. PNL 2 Rent
         p2_days = max(0, total_basic_dates - 14)
         amt_p2 = int(math.ceil(p2_gp * p2_days * 1 * 1 * dollar_rate))
         
-        # Combine the four lines to create the complete subtotal base amount
+        # Combined subtotal base amount
         amount_lkr = amt_hc + amt_br + amt_p1 + amt_p2
         
-        # Calculate grossed up SSCL (2.5%) based on the total combined base
+        # Calculate grossed up SSCL (2.5%)
         sscl_raw = (amount_lkr / 97.5) * 2.5
         sscl_tax = int(math.ceil(sscl_raw))
         
     else:
-        # Standard row processing logic
+        # Standard row-by-row math engine
         amount_lkr = int(math.ceil(base_amount))
         sscl_raw = (base_amount / 97.5) * 2.5
         sscl_tax = int(math.ceil(sscl_raw))
@@ -164,19 +164,30 @@ if rows:
     export_raw_data = [] 
     
     for r in rows:
-        val_base = int(r) if r is not None else 0
-        val_sscl = int(r) if r is not None else 0
-        val_vat  = int(r) if r is not None else 0
-        val_tot  = int(r) if r is not None else 0
+        # Fixed Indexing: r[0]=ID, r[1]=Category, r[2]=Description, r[3]=Base, r[4]=SSCL, r[5]=VAT, r[6]=Net Total
+        val_base = int(r[3]) if r[3] is not None else 0
+        val_sscl = int(r[4]) if r[4] is not None else 0
+        val_vat  = int(r[5]) if r[5] is not None else 0
+        val_tot  = int(r[6]) if r[6] is not None else 0
         
         table_data.append({
-            "Row ID": r, "Category Class": r, "Charge Description": r,
-            "Base (LKR)": f"{val_base:,}", "SSCL (2.5%)": f"{val_sscl:,}", "VAT (18%)": f"{val_vat:,}", "Net Total": f"{val_tot:,}"
+            "Row ID": r[0], 
+            "Category Class": r[1], 
+            "Charge Description": r[2],
+            "Base (LKR)": f"{val_base:,}", 
+            "SSCL (2.5%)": f"{val_sscl:,}", 
+            "VAT (18%)": f"{val_vat:,}", 
+            "Net Total": f"{val_tot:,}"
         })
         
         export_raw_data.append({
-            "Row ID": r, "Category Classification": r, "Description": r,
-            "Base Amount (LKR)": val_base, "SSCL (2.5%)": val_sscl, "VAT (18%)": val_vat, "Grand Total (LKR)": val_tot
+            "Row ID": r[0], 
+            "Category Classification": r[1], 
+            "Description": r[2],
+            "Base Amount (LKR)": val_base, 
+            "SSCL (2.5%)": val_sscl, 
+            "VAT (18%)": val_vat, 
+            "Grand Total (LKR)": val_tot
         })
         
     st.dataframe(table_data, use_container_width=True)
@@ -201,10 +212,10 @@ if rows:
     st.markdown("---")
     st.subheader("3. Continuous Calculated Ledger Aggregates")
     
-    subtotal = int(totals_row) if totals_row and totals_row is not None else 0
-    total_sscl = int(totals_row) if totals_row and totals_row is not None else 0
-    total_vat = int(totals_row) if totals_row and totals_row is not None else 0
-    grand_final = int(totals_row) if totals_row and totals_row is not None else 0
+    subtotal = int(totals_row[0]) if totals_row and totals_row[0] is not None else 0
+    total_sscl = int(totals_row[1]) if totals_row and totals_row[1] is not None else 0
+    total_vat = int(totals_row[2]) if totals_row and totals_row[2] is not None else 0
+    grand_final = int(totals_row[3]) if totals_row and totals_row[3] is not None else 0
     
     col1, col2, col3, col4 = st.columns(4)
     col1.metric("Subtotal Amount", f"LKR {subtotal:,}")
@@ -222,6 +233,7 @@ if rows:
             st.rerun()
 else:
     st.info("The invoice sheet is currently empty. Input values above to generate automated spreadsheet matrix lines.")
+
 
 
 
