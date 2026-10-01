@@ -1,7 +1,12 @@
+
+
+
 import streamlit as st
 import sqlite3
 import math
+import pandas as pd
 from datetime import datetime
+import io
 
 DB_NAME = "billing_system.db"
 
@@ -127,31 +132,55 @@ conn.close()
 
 if rows:
     table_data = []
+    export_raw_data = [] # Stores unformatted numbers cleanly for genuine Excel usage
+    
     for r in rows:
-        val_base = int(r[3]) if r[3] is not None else 0
-        val_sscl = int(r[4]) if r[4] is not None else 0
-        val_vat  = int(r[5]) if r[5] is not None else 0
-        val_tot  = int(r[6]) if r[6] is not None else 0
+        val_base = int(r) if r is not None else 0
+        val_sscl = int(r) if r is not None else 0
+        val_vat  = int(r) if r is not None else 0
+        val_tot  = int(r) if r is not None else 0
         
+        # Display variant (with text commas)
         table_data.append({
-            "Row ID": r[0], 
-            "Category Class": r[1], 
-            "Charge Description": r[2],
-            "Base (LKR)": f"{val_base:,}", 
-            "SSCL (2.5%)": f"{val_sscl:,}", 
-            "VAT (18%)": f"{val_vat:,}", 
-            "Net Total": f"{val_tot:,}"
+            "Row ID": r, "Category Class": r, "Charge Description": r,
+            "Base (LKR)": f"{val_base:,}", "SSCL (2.5%)": f"{val_sscl:,}", "VAT (18%)": f"{val_vat:,}", "Net Total": f"{val_tot:,}"
         })
+        
+        # Export variant (pure integers so Excel formulas can sum them easily)
+        export_raw_data.append({
+            "Row ID": r, "Category Classification": r, "Description": r,
+            "Base Amount (LKR)": val_base, "SSCL (2.5%)": val_sscl, "VAT (18%)": val_vat, "Grand Total (LKR)": val_tot
+        })
+        
     st.dataframe(table_data, use_container_width=True)
+
+    # Convert dataset to pandas to prepare memory streaming export
+    df_export = pd.DataFrame(export_raw_data)
+    
+    # Stream data into a virtual excel buffer
+    buffer = io.BytesIO()
+    with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
+        df_export.to_excel(writer, index=False, sheet_name='Logistics Ledger')
+    buffer.seek(0)
+
+    # Action Toolbar Buttons
+    col_dl, col_clear = st.columns([1, 5])
+    with col_dl:
+        st.download_button(
+            label="📥 Export to Excel",
+            data=buffer,
+            file_name=f"logistics_invoice_{datetime.now().strftime('%Y%m%d')}.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
 
     # --- Live Summary Blocks Ribbon ---
     st.markdown("---")
     st.subheader("3. Continuous Calculated Ledger Aggregates")
     
-    subtotal = int(totals_row[0]) if totals_row and totals_row[0] is not None else 0
-    total_sscl = int(totals_row[1]) if totals_row and totals_row[1] is not None else 0
-    total_vat = int(totals_row[2]) if totals_row and totals_row[2] is not None else 0
-    grand_final = int(totals_row[3]) if totals_row and totals_row[3] is not None else 0
+    subtotal = int(totals_row) if totals_row and totals_row is not None else 0
+    total_sscl = int(totals_row) if totals_row and totals_row is not None else 0
+    total_vat = int(totals_row) if totals_row and totals_row is not None else 0
+    grand_final = int(totals_row) if totals_row and totals_row is not None else 0
     
     col1, col2, col3, col4 = st.columns(4)
     col1.metric("Subtotal Amount", f"LKR {subtotal:,}")
@@ -159,14 +188,13 @@ if rows:
     col3.metric("Total VAT (18%)", f"LKR {total_vat:,}")
     col4.metric("GRAND TOTAL RECEIVABLE", f"LKR {grand_final:,}")
     
-    if st.button("🗑️ Clear Ledger Sheet"):
-        conn = sqlite3.connect(DB_NAME)
-        cursor = conn.cursor()
-        cursor.execute("DELETE FROM invoices")
-        conn.commit()
-        conn.close()
-        st.rerun()
+    with col_clear:
+        if st.button("🗑️ Clear Ledger Sheet"):
+            conn = sqlite3.connect(DB_NAME)
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM invoices")
+            conn.commit()
+            conn.close()
+            st.rerun()
 else:
     st.info("The invoice sheet is currently empty. Input values above to generate automated spreadsheet matrix lines.")
-
-
