@@ -55,7 +55,6 @@ if not st.session_state["authenticated"]:
 # =====================================================================
 #                         MAIN APPLICATION ENGINE
 # =====================================================================
-
 all_files = os.listdir(".") if os.path.exists(".") else []
 top_banner_file = None
 left_strip_file = None
@@ -73,7 +72,7 @@ st.title("🚢 SLPA Customs Tax Invoice Generation Engine")
 st.markdown("---")
 
 # --- TWO COLUMN APP FRAME WORK ---
-main_left, main_right = st.columns([1, 3], gap="large")
+main_left, main_right = st.columns([1, 2], gap="large")
 
 with main_left:
     st.header("📋 Header Metadata")
@@ -188,31 +187,46 @@ with main_right:
         total_vat = int(totals_row[2]) if totals_row[2] is not None else 0
         grand_final = int(totals_row[3]) if totals_row[3] is not None else 0
 
-        # VARIANT 1: VISUAL INVOICE FORM (Matching your submitted image style)
+        # VARIANT 1: VISUAL NATIVE FORM LOOK
         if output_choice == "Visual Invoice Sheet (Form Look)":
-            st.markdown(f"""
-                <div style="background-color: white; padding: 30px; border: 2px solid #333; color: black; font-family: monospace;">
-                    <div style="text-align: center; font-size: 22px; font-weight: bold; text-decoration: underline; margin-bottom: 20px;">Tax Invoice</div>
-                    <table style="width: 100%; border: none; color: black; font-size: 14px; margin-bottom: 20px;">
-                        <tr>
-                            <td style="width: 50%;"><b>Sri Lanka Ports Authority</b><br>No 19, Chaithya Road, Colombo 01.<br>Tel: 0112 483391</td>
-                            <td><b>Serial No:</b> {serial_no}<br><b>Purchases TIN:</b> {purchaser_tin}<br><b>Purchases Name:</b> {purchaser_name}</td>
-                        </tr>
-                    </table>
-                    <table style="width:100%; border-collapse: collapse; color: black; font-size: 14px; text-align: center;">
-                        <tr style="border-top: 2px solid black; border-bottom: 2px solid black;">
-                            <th style="padding: 8px; text-align: left;">Description of Goods or Services</th>
-                            <th style="padding: 8px;">Amount Excluding VAT (Rs.)</th>
-                        </tr>
-            """, unsafe_html=True)
+            st.info(f"📄 **TAX INVOICE** | Serial No: {serial_no} | Purchases TIN: {purchaser_tin}")
+            st.write(f"**Customer Name:** {purchaser_name}")
+            st.write(f"**Billing Address:** {purchaser_addr}")
             
+            table_data = []
             for r in rows:
-                st.markdown(f"""
-                        <tr style="border-bottom: 1px solid #ddd;">
-                            <td style="padding: 8px; text-align: left;">{r[2]} ({r[1]})</td>
-                            <td style="padding: 8px;">{int(r[3]):,}</td>
-                        </tr>
-                """, unsafe_html=True)
-                
-            st.markdown(f"""
-                        <tr style="border-top: 2px solid black; font-weight: bold;">
+                table_data.append({
+                    "Description of Goods or Services": f"{r[2]} ({r[1]})",
+                    "Amount Excluding VAT (Rs.)": f"{int(r[3]):,}.00"
+                })
+            st.table(table_data)
+            
+            # Display Totals beautifully using native components
+            st.markdown("---")
+            col_t1, col_t2 = st.columns(2)
+            with col_t1:
+                st.write("**Total Value of Supply:**")
+                st.write("**SSCL (2.5%):**")
+                st.write("**VAT Amount (18%):**")
+                st.subheader("**Total Amount including VAT:**")
+            with col_t2:
+                st.write(f"LKR {subtotal:,}.00")
+                st.write(f"LKR {total_sscl:,}.00")
+                st.write(f"LKR {total_vat:,}.00")
+                st.subheader(f"LKR {grand_final:,}.00")
+
+        # VARIANT 2: RAW EXCEL DOWNLOAD
+        else:
+            export_raw_data = []
+            for r in rows:
+                export_raw_data.append({
+                    "Description": r[2], "Category": r[1],
+                    "Amount Excluding VAT": int(r[3]), "SSCL Tax": int(r[4]), "VAT (18%)": int(r[5]), "Line Total": int(r[6])
+                })
+            
+            df_export = pd.DataFrame(export_raw_data)
+            
+            df_totals = pd.DataFrame([
+                {"Description": "Total Value of Supply:", "Amount Excluding VAT": subtotal},
+                {"Description": "SSCL:", "Amount Excluding VAT": total_sscl},
+                {"Description": "VAT Amount:", "Amount Excluding VAT": total_vat},
