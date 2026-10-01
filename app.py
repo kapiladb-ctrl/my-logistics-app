@@ -73,7 +73,7 @@ st.title("🚢 SLPA Customs Tax Invoice Generation Engine")
 st.markdown("---")
 
 # --- TWO COLUMN APP FRAME WORK ---
-main_left, main_right = st.columns([1, 2], gap="large")
+main_left, main_right = st.columns([1, 3], gap="large")
 
 with main_left:
     st.header("📋 Header Metadata")
@@ -127,6 +127,7 @@ with main_right:
             br_gp = st.number_input("Basic Rent Factor (GP Multiplier)", value=16.0)
             p1_gp = st.number_input("PNL 1 Factor", value=30.0)
             p2_gp = st.number_input("PNL 2 Factor", value=46.0)
+            base_amount = 0.0
 
         elif "Administrative" in category:
             charge_name = st.text_input("Description of Goods or Services", value="Penalty Charge")
