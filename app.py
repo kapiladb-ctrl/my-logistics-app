@@ -30,29 +30,45 @@ init_database()
 # --- Page Configuration ---
 st.set_page_config(page_title="Logistics Invoice System", layout="wide")
 
-# --- EMBEDDED GRAPHICS SYSTEM (PERMANENT STORAGE) ---
-# Your exact shipping port evening image converted into a permanent system string
-TOP_BANNER_IMG = "https://githubusercontent.com"
-# Your exact turquoise overhead cargo vessel image converted into a permanent system string
-LEFT_STRIP_IMG = "https://githubusercontent.com"
-
-# --- DISPLAY FRONT TOP BANNER IMAGE ---
-st.image(TOP_BANNER_IMG, use_container_width=True)
-
-st.title("🚢 Dynamic Logistics Invoice & Tax System")
-st.caption("Auto-Calculates LKR Conversions, Cascading Rent Tiers, and Strict Roundup Logic across all metrics")
-st.markdown("---")
+# --- CLEAN HEADER BANNER USING THEME EMBEDDING ---
+st.markdown(
+    """
+    <div style="background-color:#1E3A8A; padding:30px; border-radius:10px; text-align:center; margin-bottom:25px;">
+        <h1 style="color:white; margin:0; font-family:Arial;">🏗️ Dynamic Logistics Invoice & Tax System</h1>
+        <p style="color:#93C5FD; margin:10px 0 0 0; font-size:16px;">Auto-Calculates LKR Conversions, Cascading Rent Tiers, and Strict Roundup Logic</p>
+    </div>
+    """,
+    unsafe_html=True
+)
 
 # --- MAIN PAGE LAYOUT PANEL ---
-main_left, main_right = st.columns([1, 4], gap="large")
+main_left, main_right = st.columns([1, 3], gap="large")
 
 with main_left:
-    st.header("Configurations")
+    st.markdown(
+        """
+        <div style="background-color:#37474F; padding:15px; border-radius:8px; text-align:center;">
+            <h3 style="color:white; margin:0;">⚙️ Setup</h3>
+        </div>
+        """, 
+        unsafe_html=True
+    )
+    st.write("")
     dollar_rate = st.number_input("Global USD Exchange Rate", value=333.85, step=0.01)
     
     st.markdown("---")
-    # --- DISPLAY FRONT LEFT SIDE ACCENT STRIP ---
-    st.image(LEFT_STRIP_IMG, caption="Vessel Transit Stream", use_container_width=True)
+    
+    # --- VERTICAL TRANSIT ICON STRIP ---
+    st.markdown(
+        """
+        <div style="background-color:#E0F2F1; padding:25px; border-radius:8px; text-align:center; border-left: 5px solid #009688;">
+            <span style="font-size:50px;">🚢</span><br>
+            <b style="color:#00796B; font-size:16px;">Vessel Transit Stream</b><br>
+            <span style="font-size:24px; color:#009688;">🌊 🌊 🌊</span>
+        </div>
+        """,
+        unsafe_html=True
+    )
 
 with main_right:
     # --- Dynamic Input Panel ---
@@ -234,4 +250,3 @@ with main_right:
                 conn.close()
                 st.rerun()
     else:
-        st.info("The invoice sheet is currently empty. Input values above to generate automated spreadsheet matrix lines.")
