@@ -32,7 +32,6 @@ init_database()
 st.set_page_config(page_title="Logistics Invoice System", layout="wide")
 
 # --- FILE EXTENSION SCANNING MOTOR ---
-# Scans your folder and automatically catches any naming variation of your images
 all_files = os.listdir(".") if os.path.exists(".") else []
 top_banner_file = None
 left_strip_file = None
@@ -249,3 +248,4 @@ with main_right:
                 conn.close()
                 st.rerun()
     else:
+        st.info("The invoice sheet is currently empty. Input values above to generate automated spreadsheet matrix lines.")
