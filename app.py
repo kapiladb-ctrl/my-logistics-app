@@ -49,8 +49,8 @@ category = st.selectbox("Select Billing Category", [
 
 # Dynamically change input boxes based on category selection
 with st.form("invoice_form", clear_on_submit=True):
+    # Setup for standard row calculations
     if "Amendment" in category or "DC PENALTY" in category or "Pass Cancellation" in category:
-        # Determine unique default names and rates for the standard types
         if "Amendment" in category:
             default_name = "Ammendment charge"
             default_rate = 10.0
@@ -68,15 +68,38 @@ with st.form("invoice_form", clear_on_submit=True):
         # Calculate Base
         base_amount = charge_rate * items * dollar_rate
 
+    # Setup for the newly redesigned Grouped Wharf Handling calculations
     elif "Wharf Rent" in category:
-        charge_name = st.text_input("Rent Description", value="Basic Rent")
-        multiplier = st.number_input("Multiplier (GP/OT Factor)", value=16.0)
-        days = st.number_input("Dates / Total Days", value=127, step=1)
-        charge_rate = st.number_input("Charge Rate ($)", value=1.0)
-        items = st.number_input("Item Quantity", value=1, step=1)
+        charge_name = st.text_input("Invoice Group Identifier", value="Wharf Handling Charge Block")
+        st.markdown("#### Grouped Sub-Line Item Parameters")
         
-        # Calculate Base
-        base_amount = (multiplier * charge_rate) * days * items * dollar_rate
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            st.markdown("**1. Handling Charges**")
+            hc_charge = st.number_input("Handling Charge ($)", value=64.0)
+            hc_item = st.number_input("Handling Qty", value=1, step=1)
+            
+        with col2:
+            st.markdown("**2. Basic Rent**")
+            br_gp = st.number_input("Basic GP", value=16.0)
+            br_dates = st.number_input("Basic Dates", value=127, step=1)
+            br_charge = st.number_input("Basic Charge ($)", value=1.0)
+            br_item = st.number_input("Basic Qty", value=1, step=1)
+            
+        with col3:
+            st.markdown("**3. PNL 1 Rent**")
+            p1_gp = st.number_input("PNL 1 GP", value=30.0)
+            p1_dates = st.number_input("PNL 1 Dates", value=7, step=1)
+            p1_charge = st.number_input("PNL 1 Charge ($)", value=1.0)
+            p1_item = st.number_input("PNL 1 Qty", value=1, step=1)
+            
+        with col4:
+            st.markdown("**4. PNL 2 Rent**")
+            p2_gp = st.number_input("PNL 2 GP", value=46.0)
+            p2_dates = st.number_input("PNL 2 Dates", value=113, step=1)
+            p2_charge = st.number_input("PNL 2 Charge ($)", value=1.0)
+            p2_item = st.number_input("PNL 2 Qty", value=1, step=1)
 
     elif "Administrative" in category:
         charge_name = st.text_input("Description", value="Penalty Charge")
@@ -90,7 +113,6 @@ with st.form("invoice_form", clear_on_submit=True):
             end_date = st.date_input("To Date", datetime(2026, 7, 3))
             
         days = abs((end_date - start_date).days)
-        # Calculate Base
         base_amount = total_amount_lkr * factor * days
 
     submit_button = st.form_submit_button("⚡ Calculate & Add Row")
@@ -99,22 +121,35 @@ with st.form("invoice_form", clear_on_submit=True):
 if submit_button:
     is_vat_visible = "NON VAT" not in category
     
-    # 1. Base Amount: Implements strict ROUNDUP rule (e.g., 1669.25 -> 1670)
-    amount_lkr = int(math.ceil(base_amount))
-    
-    # 2. SSCL Tax: Implements exact ROUNDUP(Base/97.5*2.5, 0) logic
-    sscl_raw = (base_amount / 97.5) * 2.5
-    sscl_tax = int(math.ceil(sscl_raw))
-    
-    # 3. Cascading Tax Foundation Rule: VAT calculation happens regardless of visibility
+    if "Wharf Rent" in category:
+        # 1. Calculate each row using strict math.ceil roundup logic separately
+        amt_hc = int(math.ceil(hc_charge * hc_item * dollar_rate))
+        amt_br = int(math.ceil(br_gp * br_dates * br_charge * br_item * dollar_rate))
+        amt_p1 = int(math.ceil(p1_gp * p1_dates * p1_charge * p1_item * dollar_rate))
+        amt_p2 = int(math.ceil(p2_gp * p2_dates * p2_charge * p2_item * dollar_rate))
+        
+        # 2. Combine base amounts to exactly mimic your subtotal column (2,505,213 LKR)
+        amount_lkr = amt_hc + amt_br + amt_p1 + amt_p2
+        
+        # 3. Calculate the cumulative grossed up SSCL (2.5%) based on the total subtotal
+        sscl_raw = (amount_lkr / 97.5) * 2.5
+        sscl_tax = int(math.ceil(sscl_raw)) # Pushes exactly to 64,237 LKR
+        
+    else:
+        # Standard row-by-row math engine
+        amount_lkr = int(math.ceil(base_amount))
+        sscl_raw = (base_amount / 97.5) * 2.5
+        sscl_tax = int(math.ceil(sscl_raw))
+        
+    # 4. Cascading Tax Rule: VAT calculation base = Amount + SSCL
     vat_base = amount_lkr + sscl_tax
     calculated_vat = int(math.ceil(vat_base * 0.18))
     
-    # Apply conditional visibility rule
+    # 5. Apply conditional column visibility logic
     vat_column_value = calculated_vat if is_vat_visible else 0
     grand_total = amount_lkr + sscl_tax + calculated_vat
     
-    # Save to database simulation
+    # Save parameters to database log
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
     cursor.execute("""
@@ -143,27 +178,25 @@ if rows:
     export_raw_data = [] 
     
     for r in rows:
-        val_base = int(r[3]) if r[3] is not None else 0
-        val_sscl = int(r[4]) if r[4] is not None else 0
-        val_vat  = int(r[5]) if r[5] is not None else 0
-        val_tot  = int(r[6]) if r[6] is not None else 0
+        val_base = int(r) if r is not None else 0
+        val_sscl = int(r) if r is not None else 0
+        val_vat  = int(r) if r is not None else 0
+        val_tot  = int(r) if r is not None else 0
         
-        # Display variant (with text commas)
         table_data.append({
-            "Row ID": r[0], 
-            "Category Class": r[1], 
-            "Charge Description": r[2],
+            "Row ID": r, 
+            "Category Class": r, 
+            "Charge Description": r,
             "Base (LKR)": f"{val_base:,}", 
             "SSCL (2.5%)": f"{val_sscl:,}", 
             "VAT (18%)": f"{val_vat:,}", 
             "Net Total": f"{val_tot:,}"
         })
         
-        # Export variant (pure integers for clean Excel math)
         export_raw_data.append({
-            "Row ID": r[0], 
-            "Category Classification": r[1], 
-            "Description": r[2],
+            "Row ID": r, 
+            "Category Classification": r, 
+            "Description": r,
             "Base Amount (LKR)": val_base, 
             "SSCL (2.5%)": val_sscl, 
             "VAT (18%)": val_vat, 
@@ -175,7 +208,6 @@ if rows:
     # Convert dataset to pandas to prepare memory streaming export
     df_export = pd.DataFrame(export_raw_data)
     
-    # Stream data into a virtual excel buffer
     buffer = io.BytesIO()
     with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
         df_export.to_excel(writer, index=False, sheet_name='Logistics Ledger')
@@ -195,10 +227,10 @@ if rows:
     st.markdown("---")
     st.subheader("3. Continuous Calculated Ledger Aggregates")
     
-    subtotal = int(totals_row[0]) if totals_row and totals_row[0] is not None else 0
-    total_sscl = int(totals_row[1]) if totals_row and totals_row[1] is not None else 0
-    total_vat = int(totals_row[2]) if totals_row and totals_row[2] is not None else 0
-    grand_final = int(totals_row[3]) if totals_row and totals_row[3] is not None else 0
+    subtotal = int(totals_row) if totals_row and totals_row is not None else 0
+    total_sscl = int(totals_row) if totals_row and totals_row is not None else 0
+    total_vat = int(totals_row) if totals_row and totals_row is not None else 0
+    grand_final = int(totals_row) if totals_row and totals_row is not None else 0
     
     col1, col2, col3, col4 = st.columns(4)
     col1.metric("Subtotal Amount", f"LKR {subtotal:,}")
@@ -216,5 +248,6 @@ if rows:
             st.rerun()
 else:
     st.info("The invoice sheet is currently empty. Input values above to generate automated spreadsheet matrix lines.")
+
 
 
