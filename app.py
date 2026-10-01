@@ -48,7 +48,7 @@ category = st.selectbox("Select Billing Category", [
 with st.form("invoice_form", clear_on_submit=True):
     if "Amendment" in category or "DC PENALTY" in category:
         charge_name = st.text_input("Charge Description", value="Ammendment charge" if "Amendment" in category else "DC Penalty Charge")
-        charge_rate = st.number_input("Charge Rate ($)", value=10.0 if "Amendment" in category else 26.0)
+        charge_rate = st.number_input("Charge Rate ($)", value=10.0 if "Amendment" in category else "DC PENALTY" in category and 26.0 or 0.0)
         items = st.number_input("Item Count / Qty", value=1, step=1)
         
         # Calculate Base
@@ -120,17 +120,28 @@ cursor = conn.cursor()
 cursor.execute("SELECT * FROM invoices")
 rows = cursor.fetchall()
 
-# Calculate totals
+# Calculate totals safely with fallback values
 cursor.execute("SELECT SUM(amount_lkr), SUM(sscl_tax), SUM(vat_tax), SUM(grand_total) FROM invoices")
-totals = cursor.fetchone()
+totals_row = cursor.fetchone()
 conn.close()
 
 if rows:
     table_data = []
     for r in rows:
+        # Safe integer conversions to avoid any formatting bugs
+        val_base = int(r[3]) if r[3] is not None else 0
+        val_sscl = int(r[4]) if r[4] is not None else 0
+        val_vat  = int(r[5]) if r[5] is not None else 0
+        val_tot  = int(r[6]) if r[6] is not None else 0
+        
         table_data.append({
-            "Row ID": r, "Category Class": r, "Charge Description": r,
-            "Base (LKR)": f"{r:,}", "SSCL (2.5%)": f"{r:,}", "VAT (18%)": f"{r:,}", "Net Total": f"{r:,}"
+            "Row ID": r[0], 
+            "Category Class": r[1], 
+            "Charge Description": r[2],
+            "Base (LKR)": f"{val_base:,}", 
+            "SSCL (2.5%)": f"{val_sscl:,}", 
+            "VAT (18%)": f"{val_vat:,}", 
+            "Net Total": f"{val_tot:,}"
         })
     st.dataframe(table_data, use_container_width=True)
 
@@ -138,10 +149,10 @@ if rows:
     st.markdown("---")
     st.subheader("3. Continuous Calculated Ledger Aggregates")
     
-    subtotal = totals if totals else 0
-    total_sscl = totals if totals else 0
-    total_vat = totals if totals else 0
-    grand_final = totals if totals else 0
+    subtotal = int(totals_row[0]) if totals_row and totals_row[0] is not None else 0
+    total_sscl = int(totals_row[1]) if totals_row and totals_row[1] is not None else 0
+    total_vat = int(totals_row[2]) if totals_row and totals_row[2] is not None else 0
+    grand_final = int(totals_row[3]) if totals_row and totals_row[3] is not None else 0
     
     col1, col2, col3, col4 = st.columns(4)
     col1.metric("Subtotal Amount", f"LKR {subtotal:,}")
