@@ -43,14 +43,49 @@ for f in all_files:
     if "left" in f_lower and "strip" in f_lower and any(ext in f_lower for ext in [".jpg", ".jpeg", ".png"]):
         left_strip_file = f
 
-# --- DISPLAY FRONT TOP BANNER IMAGE ---
+# --- ADVANCED BACKGROUND & BANNER STRIP INJECTION ---
+# If your top_banner image is uploaded, we inject it into the app background and crop it as a top strip natively using CSS
 if top_banner_file:
-    st.image(top_banner_file, use_container_width=True)
+    # Read the image path to use in background injection
+    st.markdown(
+        f"""
+        <style>
+        /* 1. Sets the entire application background with a clean frosted glass tint */
+        .stApp {{
+            background: linear-gradient(rgba(255, 255, 255, 0.90), rgba(255, 255, 255, 0.90)), url("app/static/{top_banner_file}");
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }}
+        
+        /* 2. Forces a narrow cropped horizontal strip at the very top of the system page */
+        .top-custom-strip {{
+            background-image: url("app/static/{top_banner_file}");
+            background-size: cover;
+            background-position: center 30%;
+            height: 100px;
+            width: 100%;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.4);
+        }}
+        </style>
+        <div class="top-custom-strip"></div>
+        """,
+        unsafe_html=True
+    )
 else:
-    with st.container():
-        st.title("🚢 Dynamic Logistics Invoice & Tax System")
-        st.info("Auto-Calculates LKR Conversions, Cascading Rent Tiers, and Strict Roundup Logic across all metrics")
+    st.markdown(
+        """
+        <div style="background-color:#1E3A8A; padding:20px; border-radius:8px; text-align:center; margin-bottom:20px;">
+            <h2 style="color:white; margin:0;">🚢 Dynamic Logistics Invoice & Tax System</h2>
+        </div>
+        """,
+        unsafe_html=True
+    )
 
+st.title("🚢 Dynamic Logistics Invoice & Tax System")
+st.caption("Auto-Calculates LKR Conversions, Cascading Rent Tiers, and Strict Roundup Logic across all metrics")
 st.markdown("---")
 
 # --- MAIN PAGE LAYOUT PANEL ---
@@ -221,31 +256,3 @@ with main_right:
                 label="📥 Export to Excel",
                 data=buffer,
                 file_name=f"logistics_invoice_{datetime.now().strftime('%Y%m%d')}.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            )
-
-        # --- Live Summary Blocks Ribbon ---
-        st.markdown("---")
-        st.subheader("3. Continuous Calculated Ledger Aggregates")
-        
-        subtotal = int(totals_row[0]) if totals_row and totals_row[0] is not None else 0
-        total_sscl = int(totals_row[1]) if totals_row and totals_row[1] is not None else 0
-        total_vat = int(totals_row[2]) if totals_row and totals_row[2] is not None else 0
-        grand_final = int(totals_row[3]) if totals_row and totals_row[3] is not None else 0
-        
-        col1, col2, col3, col4 = st.columns(4)
-        col1.metric("Subtotal Amount", f"LKR {subtotal:,}")
-        col2.metric("Total SSCL (2.5%)", f"LKR {total_sscl:,}")
-        col3.metric("Total VAT (18%)", f"LKR {total_vat:,}")
-        col4.metric("GRAND TOTAL RECEIVABLE", f"LKR {grand_final:,}")
-        
-        with col_clear:
-            if st.button("🗑️ Clear Ledger Sheet"):
-                conn = sqlite3.connect(DB_NAME)
-                cursor = conn.cursor()
-                cursor.execute("DELETE FROM invoices")
-                conn.commit()
-                conn.close()
-                st.rerun()
-    else:
-        st.info("The invoice sheet is currently empty. Input values above to generate automated spreadsheet matrix lines.")
