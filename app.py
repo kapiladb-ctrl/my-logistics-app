@@ -44,16 +44,21 @@ for f in all_files:
         left_strip_file = f
 
 # --- ADVANCED BACKGROUND & BANNER STRIP INJECTION ---
+# If your top_banner image is uploaded, we inject it into the app background and crop it as a top strip natively using CSS
 if top_banner_file:
+    # Read the image path to use in background injection
     st.markdown(
         f"""
         <style>
+        /* 1. Sets the entire application background with a clean frosted glass tint */
         .stApp {{
             background: linear-gradient(rgba(255, 255, 255, 0.90), rgba(255, 255, 255, 0.90)), url("app/static/{top_banner_file}");
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
         }}
+        
+        /* 2. Forces a narrow cropped horizontal strip at the very top of the system page */
         .top-custom-strip {{
             background-image: url("app/static/{top_banner_file}");
             background-size: cover;
@@ -92,6 +97,7 @@ with main_left:
     
     st.markdown("---")
     
+    # --- DISPLAY FRONT LEFT SIDE ACCENT STRIP ---
     if left_strip_file:
         st.image(left_strip_file, caption="Vessel Transit Stream", use_container_width=True)
     else:
@@ -250,12 +256,3 @@ with main_right:
                 label="📥 Export to Excel",
                 data=buffer,
                 file_name=f"logistics_invoice_{datetime.now().strftime('%Y%m%d')}.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            )
-
-        # --- Live Summary Blocks Ribbon ---
-        st.markdown("---")
-        st.subheader("3. Continuous Calculated Ledger Aggregates")
-        
-        subtotal = int(totals_row[0]) if totals_row and totals_row[0] is not None else 0
-        total_sscl = int(totals_row[1]) if totals_row and totals_row[1] is not None else 0
