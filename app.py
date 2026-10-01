@@ -30,7 +30,7 @@ init_database()
 # --- Page Configuration ---
 st.set_page_config(page_title="Logistics Invoice System", layout="wide")
 st.title("🚢 Dynamic Logistics Invoice & Tax System")
-st.caption("Auto-Calculates LKR Conversions, SSCL Gross-Up Formulas, and Strict安 Roundup Logic across all metrics")
+st.caption("Auto-Calculates LKR Conversions, SSCL Gross-Up Formulas, and Strict Roundup Logic across all metrics")
 
 # --- Global Settings Sidebar ---
 st.sidebar.header("Global Configurations")
@@ -43,14 +43,26 @@ category = st.selectbox("Select Billing Category", [
     "Amendment Charge (VAT)",
     "DC PENALTY Charge",
     "Wharf Rent / Basic Handling",
-    "Administrative charge 1%"
+    "Administrative charge 1%",
+    "Pass Cancellation Charges"
 ])
 
 # Dynamically change input boxes based on category selection
 with st.form("invoice_form", clear_on_submit=True):
-    if "Amendment" in category or "DC PENALTY" in category:
-        charge_name = st.text_input("Charge Description", value="Ammendment charge" if "Amendment" in category else "DC Penalty Charge")
-        charge_rate = st.number_input("Charge Rate ($)", value=10.0 if "Amendment" in category else 26.0)
+    if "Amendment" in category or "DC PENALTY" in category or "Pass Cancellation" in category:
+        # Determine unique default names and rates for the standard types
+        if "Amendment" in category:
+            default_name = "Ammendment charge"
+            default_rate = 10.0
+        elif "DC PENALTY" in category:
+            default_name = "DC Penalty Charge"
+            default_rate = 26.0
+        else:
+            default_name = "Pass Cancellation Charge"
+            default_rate = 5.0
+            
+        charge_name = st.text_input("Charge Description", value=default_name)
+        charge_rate = st.number_input("Charge Rate ($)", value=default_rate)
         items = st.number_input("Item Count / Qty", value=1, step=1)
         
         # Calculate Base
@@ -87,7 +99,7 @@ with st.form("invoice_form", clear_on_submit=True):
 if submit_button:
     is_vat_visible = "NON VAT" not in category
     
-    # 1. Base Amount: Implements strict ROUNDUP rule (e.g., 3338.5 -> 3339)
+    # 1. Base Amount: Implements strict ROUNDUP rule (e.g., 1669.25 -> 1670)
     amount_lkr = int(math.ceil(base_amount))
     
     # 2. SSCL Tax: Implements exact ROUNDUP(Base/97.5*2.5, 0) logic
@@ -98,8 +110,7 @@ if submit_button:
     vat_base = amount_lkr + sscl_tax
     calculated_vat = int(math.ceil(vat_base * 0.18))
     
-    # Apply your conditional visibility rule: 
-    # If NON-VAT, display 0 in the column, but add the calculated amount to the grand total.
+    # Apply conditional visibility rule
     vat_column_value = calculated_vat if is_vat_visible else 0
     grand_total = amount_lkr + sscl_tax + calculated_vat
     
@@ -132,8 +143,6 @@ if rows:
     export_raw_data = [] 
     
     for r in rows:
-        # Correctly pointing to positions within the database row tuple:
-        # r[0]=ID, r[1]=Category, r[2]=Description, r[3]=Base, r[4]=SSCL, r[5]=VAT, r[6]=Grand Total
         val_base = int(r[3]) if r[3] is not None else 0
         val_sscl = int(r[4]) if r[4] is not None else 0
         val_vat  = int(r[5]) if r[5] is not None else 0
@@ -207,4 +216,5 @@ if rows:
             st.rerun()
 else:
     st.info("The invoice sheet is currently empty. Input values above to generate automated spreadsheet matrix lines.")
+
 
