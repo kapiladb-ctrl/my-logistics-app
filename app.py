@@ -4,6 +4,7 @@ import math
 import pandas as pd
 from datetime import datetime
 import io
+import os
 
 DB_NAME = "billing_system.db"
 
@@ -30,12 +31,27 @@ init_database()
 # --- Page Configuration ---
 st.set_page_config(page_title="Logistics Invoice System", layout="wide")
 
-# --- DISPLAY FRONT TOP BANNER IMAGE NATIVELY ---
-# Pulls directly from your uploaded repository file
-try:
-    st.image("top_banner.jpg", use_container_width=True)
-except:
-    st.error("Top banner image file not found in repository. Please upload top_banner.jpg")
+# --- SMART BANNER DISPLAYER ---
+# Automatically searches for your image file under different extension variations
+top_banner_file = None
+for ext in ["jpg", "jpeg", "png", "JPG", "PNG", "JPEG"]:
+    if os.path.exists(f"top_banner.{ext}"):
+        top_banner_file = f"top_banner.{ext}"
+        break
+
+if top_banner_file:
+    st.image(top_banner_file, use_container_width=True)
+else:
+    # Beautiful backup banner if the file extension doesn't match perfectly
+    st.markdown(
+        """
+        <div style="background-color:#1E3A8A; padding:25px; border-radius:10px; text-align:center; margin-bottom:20px;">
+            <h1 style="color:white; margin:0; font-family:Arial;">🚢 Dynamic Logistics Invoice & Tax System</h1>
+            <p style="color:#93C5FD; margin:5px 0 0 0;">Auto-Calculates Conversions, Cascading Rent Tiers, and Strict Roundup Logic</p>
+        </div>
+        """,
+        unsafe_html=True
+    )
 
 st.title("🚢 Dynamic Logistics Invoice & Tax System")
 st.caption("Auto-Calculates LKR Conversions, Cascading Rent Tiers, and Strict Roundup Logic across all metrics")
@@ -49,12 +65,26 @@ with main_left:
     dollar_rate = st.number_input("Global USD Exchange Rate", value=333.85, step=0.01)
     
     st.markdown("---")
-    # --- DISPLAY FRONT LEFT SIDE ACCENT STRIP NATIVELY ---
-    # Pulls directly from your uploaded repository file
-    try:
-        st.image("left_strip.jpg", caption="Vessel Transit Stream", use_container_width=True)
-    except:
-        st.caption("Left accent image file not found. Please upload left_strip.jpg")
+    
+    # --- SMART ACCENT STRIP DISPLAYER ---
+    left_strip_file = None
+    for ext in ["jpg", "jpeg", "png", "JPG", "PNG", "JPEG"]:
+        if os.path.exists(f"left_strip.{ext}"):
+            left_strip_file = f"left_strip.{ext}"
+            break
+            
+    if left_strip_file:
+        st.image(left_strip_file, caption="Vessel Transit Stream", use_container_width=True)
+    else:
+        st.markdown(
+            """
+            <div style="background-color:#ECEFF1; padding:20px; border-radius:8px; text-align:center; border-left:4px solid #607D8B;">
+                <span style="font-size:40px;">⚓</span><br>
+                <b style="color:#37474F;">Vessel Transit Active</b>
+            </div>
+            """,
+            unsafe_html=True
+        )
 
 with main_right:
     # --- Dynamic Input Panel ---
@@ -221,19 +251,3 @@ with main_right:
         total_vat = int(totals_row[2]) if totals_row and totals_row[2] is not None else 0
         grand_final = int(totals_row[3]) if totals_row and totals_row[3] is not None else 0
         
-        col1, col2, col3, col4 = st.columns(4)
-        col1.metric("Subtotal Amount", f"LKR {subtotal:,}")
-        col2.metric("Total SSCL (2.5%)", f"LKR {total_sscl:,}")
-        col3.metric("Total VAT (18%)", f"LKR {total_vat:,}")
-        col4.metric("GRAND TOTAL RECEIVABLE", f"LKR {grand_final:,}")
-        
-        with col_clear:
-            if st.button("🗑️ Clear Ledger Sheet"):
-                conn = sqlite3.connect(DB_NAME)
-                cursor = conn.cursor()
-                cursor.execute("DELETE FROM invoices")
-                conn.commit()
-                conn.close()
-                st.rerun()
-    else:
-        st.info("The invoice sheet is currently empty. Input values above to generate automated spreadsheet matrix lines.")
