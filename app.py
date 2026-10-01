@@ -31,16 +31,15 @@ init_database()
 st.set_page_config(page_title="Logistics Invoice System", layout="wide")
 
 # --- FRONT TOP BANNER IMAGE ---
-# Features your stunning evening port cargo vessel image
-st.image("https://unsplash.com", use_container_width=True)
+# Using highly reliable direct cdn links to ensure they load on all computers
+st.image("https://pexels.com", use_container_width=True)
 
 st.title("🚢 Dynamic Logistics Invoice & Tax System")
 st.caption("Auto-Calculates LKR Conversions, Cascading Rent Tiers, and Strict Roundup Logic across all metrics")
 st.markdown("---")
 
 # --- MAIN PAGE LAYOUT ---
-# Creates a narrow left column for configs/accent strip and a wide right column for data inputs
-main_left, main_right = st.columns([1, 4], gap="large")
+main_left, main_right = st.columns([1, 3], gap="large")
 
 with main_left:
     st.header("Configurations")
@@ -48,8 +47,7 @@ with main_left:
     
     st.markdown("---")
     # --- FRONT LEFT SIDE ACCENT STRIP ---
-    # Features your beautiful turquoise overhead cargo vessel image running top to down
-    st.image("https://unsplash.com", 
+    st.image("https://pexels.com", 
              caption="Vessel Transit Stream", use_container_width=True)
 
 with main_right:
@@ -116,7 +114,6 @@ with main_right:
         is_vat_visible = "NON VAT" not in category
         
         if "Wharf Rent" in category:
-            # Automated Rent Day Breakdown Logic
             amt_hc = int(math.ceil(hc_charge * 1 * dollar_rate))
             amt_br = int(math.ceil(br_gp * total_basic_dates * 1 * 1 * dollar_rate))
             
