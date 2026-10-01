@@ -31,17 +31,23 @@ init_database()
 # --- Page Configuration ---
 st.set_page_config(page_title="Logistics Invoice System", layout="wide")
 
-# --- SMART BANNER DISPLAYER ---
+# --- FILE EXTENSION SCANNING MOTOR ---
+# Scans your folder and automatically catches any naming variation of your images
+all_files = os.listdir(".") if os.path.exists(".") else []
 top_banner_file = None
-for ext in ["jpg", "jpeg", "png", "JPG", "PNG", "JPEG"]:
-    if os.path.exists(f"top_banner.{ext}"):
-        top_banner_file = f"top_banner.{ext}"
-        break
+left_strip_file = None
 
+for f in all_files:
+    f_lower = f.lower()
+    if "top" in f_lower and "banner" in f_lower and any(ext in f_lower for ext in [".jpg", ".jpeg", ".png"]):
+        top_banner_file = f
+    if "left" in f_lower and "strip" in f_lower and any(ext in f_lower for ext in [".jpg", ".jpeg", ".png"]):
+        left_strip_file = f
+
+# --- DISPLAY FRONT TOP BANNER IMAGE ---
 if top_banner_file:
     st.image(top_banner_file, use_container_width=True)
 else:
-    # 100% Safe Native Container - Will never crash or break down
     with st.container():
         st.title("🚢 Dynamic Logistics Invoice & Tax System")
         st.info("Auto-Calculates LKR Conversions, Cascading Rent Tiers, and Strict Roundup Logic across all metrics")
@@ -57,17 +63,10 @@ with main_left:
     
     st.markdown("---")
     
-    # --- SMART ACCENT STRIP DISPLAYER ---
-    left_strip_file = None
-    for ext in ["jpg", "jpeg", "png", "JPG", "PNG", "JPEG"]:
-        if os.path.exists(f"left_strip.{ext}"):
-            left_strip_file = f"left_strip.{ext}"
-            break
-            
+    # --- DISPLAY FRONT LEFT SIDE ACCENT STRIP ---
     if left_strip_file:
         st.image(left_strip_file, caption="Vessel Transit Stream", use_container_width=True)
     else:
-        # Safe Native Status widget box
         st.success("⚓ **Vessel Transit Active**\n\nContinuous calculation engine ready.")
 
 with main_right:
@@ -250,4 +249,3 @@ with main_right:
                 conn.close()
                 st.rerun()
     else:
-        st.info("The invoice sheet is currently empty. Input values above to generate automated spreadsheet matrix lines.")
