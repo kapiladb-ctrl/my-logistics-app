@@ -72,7 +72,7 @@ st.title("🚢 SLPA Customs Tax Invoice Generation Engine")
 st.markdown("---")
 
 # --- TWO COLUMN APP FRAME WORK ---
-main_left, main_right = st.columns([1, 2], gap="large")
+main_left, main_right = st.columns([1, 3], gap="large")
 
 with main_left:
     st.header("📋 Header Metadata")
@@ -201,7 +201,6 @@ with main_right:
                 })
             st.table(table_data)
             
-            # Display Totals beautifully using native components
             st.markdown("---")
             col_t1, col_t2 = st.columns(2)
             with col_t1:
