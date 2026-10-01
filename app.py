@@ -28,7 +28,7 @@ init_database()
 # --- Page Configuration ---
 st.set_page_config(page_title="Logistics Invoice System", layout="wide")
 st.title("🚢 Dynamic Logistics Invoice & Tax System")
-st.caption("Auto-Calculates LKR Conversions, SSCL Gross-Up Formulas, and Conditional VAT Redistribution Logic")
+st.caption("Auto-Calculates LKR Conversions, SSCL Gross-Up Formulas, and Strict Roundup Logic across all metrics")
 
 # --- Global Settings Sidebar ---
 st.sidebar.header("Global Configurations")
@@ -48,7 +48,7 @@ category = st.selectbox("Select Billing Category", [
 with st.form("invoice_form", clear_on_submit=True):
     if "Amendment" in category or "DC PENALTY" in category:
         charge_name = st.text_input("Charge Description", value="Ammendment charge" if "Amendment" in category else "DC Penalty Charge")
-        charge_rate = st.number_input("Charge Rate ($)", value=10.0 if "Amendment" in category else "DC PENALTY" in category and 26.0 or 0.0)
+        charge_rate = st.number_input("Charge Rate ($)", value=10.0 if "Amendment" in category else 26.0)
         items = st.number_input("Item Count / Qty", value=1, step=1)
         
         # Calculate Base
@@ -85,10 +85,10 @@ with st.form("invoice_form", clear_on_submit=True):
 if submit_button:
     is_vat_visible = "NON VAT" not in category
     
-    # 1. Base Amount (Strictly Rounded Integer)
-    amount_lkr = int(round(base_amount))
+    # 1. Base Amount: Implements strict ROUNDUP rule (e.g., 3338.5 -> 3339)
+    amount_lkr = int(math.ceil(base_amount))
     
-    # 2. SSCL Tax: Implements your exact ROUNDUP(Base/97.5*2.5, 0) logic
+    # 2. SSCL Tax: Implements exact ROUNDUP(Base/97.5*2.5, 0) logic
     sscl_raw = (base_amount / 97.5) * 2.5
     sscl_tax = int(math.ceil(sscl_raw))
     
@@ -128,7 +128,6 @@ conn.close()
 if rows:
     table_data = []
     for r in rows:
-        # Safe integer conversions to avoid any formatting bugs
         val_base = int(r[3]) if r[3] is not None else 0
         val_sscl = int(r[4]) if r[4] is not None else 0
         val_vat  = int(r[5]) if r[5] is not None else 0
