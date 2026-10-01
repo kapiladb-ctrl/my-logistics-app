@@ -84,12 +84,26 @@ with main_left:
     st.markdown("---")
     dollar_rate = st.number_input("Global USD Exchange Rate", value=333.85, step=0.01)
     
-    if left_strip_file:
-        st.image(left_strip_file, caption="Transit Stream Active", use_container_width=True)
     st.markdown("---")
-    if st.button("🔒 Log Out"):
+    st.subheader("🛠️ Maintenance Controls")
+    
+    # PERMANENTLY UNHIDDEN CLEAR BUTTON (Placed outside loops so it stays visible always)
+    if st.button("🗑️ Clear Current Invoice Sheet", type="secondary", use_container_width=True):
+        conn = sqlite3.connect(DB_NAME)
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM invoices")
+        conn.commit()
+        conn.close()
+        st.success("Ledger matrix cache purged clean!")
+        st.rerun()
+        
+    if st.button("🔒 Log Out Component", type="primary", use_container_width=True):
         st.session_state["authenticated"] = False
         st.rerun()
+        
+    st.markdown("---")
+    if left_strip_file:
+        st.image(left_strip_file, caption="Transit Stream Active", use_container_width=True)
 
 with main_right:
     st.header("1. Input Invoice Details")
@@ -168,74 +182,55 @@ with main_right:
         conn.close()
         st.success("Calculated and added successfully!")
 
-# --- OUTPUT MANAGEMENT FRAMEWORK ---
-st.markdown("---")
-st.header("2. Choose Output Format Options")
-output_choice = st.radio("Select Output Format Variant:", ["Visual Invoice Sheet (Form Look)", "Raw Excel Spreadsheet (.xlsx)"])
+    # --- OUTPUT MANAGEMENT FRAMEWORK ---
+    st.markdown("---")
+    st.header("2. Choose Output Format Options")
+    output_choice = st.radio("Select Output Format Variant:", ["Visual Invoice Sheet (Form Look)", "Raw Excel Spreadsheet (.xlsx)"])
 
-conn = sqlite3.connect(DB_NAME)
-cursor = conn.cursor()
-cursor.execute("SELECT * FROM invoices")
-rows = cursor.fetchall()
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM invoices")
+    rows = cursor.fetchall()
+    cursor.execute("SELECT SUM(amount_lkr), SUM(sscl_tax), SUM(vat_tax), SUM(grand_total) FROM invoices")
+    totals_row = cursor.fetchone()
+    conn.close()
 
-# Calculate totals safely with fallback values
-cursor.execute("SELECT SUM(amount_lkr), SUM(sscl_tax), SUM(vat_tax), SUM(grand_total) FROM invoices")
-totals_row = cursor.fetchone()
-conn.close()
+    if rows:
+        subtotal = int(totals_row) if totals_row is not None else 0
+        total_sscl = int(totals_row) if totals_row is not None else 0
+        total_vat = int(totals_row) if totals_row is not None else 0
+        grand_final = int(totals_row) if totals_row is not None else 0
 
-if rows:
-    subtotal = int(totals_row[0]) if totals_row[0] is not None else 0
-    total_sscl = int(totals_row[1]) if totals_row[1] is not None else 0
-    total_vat = int(totals_row[2]) if totals_row[2] is not None else 0
-    grand_final = int(totals_row[3]) if totals_row[3] is not None else 0
+        # VARIANT 1: VISUAL NATIVE FORM LOOK
+        if output_choice == "Visual Invoice Sheet (Form Look)":
+            st.info(f"📄 **TAX INVOICE** | Serial No: {serial_no} | Purchases TIN: {purchaser_tin}")
+            st.write(f"**Customer Name:** {purchaser_name}")
+            st.write(f"**Billing Address:** {purchaser_addr}")
+            
+            table_data = []
+            for r in rows:
+                table_data.append({
+                    "Description of Goods or Services": f"{r} ({r})",
+                    "Amount Excluding VAT (Rs.)": f"{int(r):,}.00"
+                })
+            st.table(table_data)
+            
+            st.markdown("---")
+            col_t1, col_t2 = st.columns(2)
+            with col_t1:
+                st.write("**Total Value of Supply:**")
+                st.write("**SSCL (2.5%):**")
+                st.write("**VAT Amount (18%):**")
+                st.subheader("**Total Amount including VAT:**")
+            with col_t2:
+                st.write(f"LKR {subtotal:,}.00")
+                st.write(f"LKR {total_sscl:,}.00")
+                st.write(f"LKR {total_vat:,}.00")
+                st.subheader(f"LKR {grand_final:,}.00")
 
-    # VARIANT 1: VISUAL NATIVE FORM LOOK
-    if output_choice == "Visual Invoice Sheet (Form Look)":
-        st.info(f"📄 **TAX INVOICE** | Serial No: {serial_no} | Purchases TIN: {purchaser_tin}")
-        st.write(f"**Customer Name:** {purchaser_name}")
-        st.write(f"**Billing Address:** {purchaser_addr}")
-        
-        table_data = []
-        for r in rows:
-            table_data.append({
-                "Description of Goods or Services": f"{r[2]} ({r[1]})",
-                "Amount Excluding VAT (Rs.)": f"{int(r[3]):,}.00"
-            })
-        st.table(table_data)
-        
-        st.markdown("---")
-        col_t1, col_t2 = st.columns(2)
-        with col_t1:
-            st.write("**Total Value of Supply:**")
-            st.write("**SSCL (2.5%):**")
-            st.write("**VAT Amount (18%):**")
-            st.subheader("**Total Amount including VAT:**")
-        with col_t2:
-            st.write(f"LKR {subtotal:,}.00")
-            st.write(f"LKR {total_sscl:,}.00")
-            st.write(f"LKR {total_vat:,}.00")
-            st.subheader(f"LKR {grand_final:,}.00")
-
-    # VARIANT 2: RAW EXCEL DOWNLOAD
-    else:
-        export_raw_data = []
-        for r in rows:
-            export_raw_data.append({
-                "Description": r[2], 
-                "Category": r[1],
-                "Amount Excluding VAT": int(r[3]), 
-                "SSCL Tax": int(r[4]), 
-                "VAT (18%)": int(r[5]), 
-                "Line Total": int(r[6])
-            })
-        
-        df_export = pd.DataFrame(export_raw_data)
-        
-        # Perfect closed dictionary rows mapping columns cleanly for pandas
-        df_totals = pd.DataFrame([
-            {"Description": "Total Value of Supply:", "Amount Excluding VAT": subtotal},
-            {"Description": "SSCL:", "Amount Excluding VAT": total_sscl},
-            {"Description": "VAT Amount:", "Amount Excluding VAT": total_vat},
-            {"Description": "Total Amount including VAT:", "Amount Excluding VAT": grand_final}
-        ])
-        
+        # VARIANT 2: RAW EXCEL DOWNLOAD
+        else:
+            export_raw_data = []
+            for r in rows:
+                export_raw_data.append({
+                    "Description": r, "Category": r,
