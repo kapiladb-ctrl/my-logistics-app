@@ -87,7 +87,7 @@ with main_left:
     st.markdown("---")
     st.subheader("🛠️ Maintenance Controls")
     
-    # PERMANENTLY UNHIDDEN CLEAR BUTTON (Placed outside loops so it stays visible always)
+    # PERMANENTLY UNHIDDEN MAINTENANCE UTILITIES
     if st.button("🗑️ Clear Current Invoice Sheet", type="secondary", use_container_width=True):
         conn = sqlite3.connect(DB_NAME)
         cursor = conn.cursor()
@@ -196,10 +196,10 @@ with main_right:
     conn.close()
 
     if rows:
-        subtotal = int(totals_row) if totals_row is not None else 0
-        total_sscl = int(totals_row) if totals_row is not None else 0
-        total_vat = int(totals_row) if totals_row is not None else 0
-        grand_final = int(totals_row) if totals_row is not None else 0
+        subtotal = int(totals_row[0]) if totals_row[0] is not None else 0
+        total_sscl = int(totals_row[1]) if totals_row[1] is not None else 0
+        total_vat = int(totals_row[2]) if totals_row[2] is not None else 0
+        grand_final = int(totals_row[3]) if totals_row[3] is not None else 0
 
         # VARIANT 1: VISUAL NATIVE FORM LOOK
         if output_choice == "Visual Invoice Sheet (Form Look)":
@@ -210,8 +210,8 @@ with main_right:
             table_data = []
             for r in rows:
                 table_data.append({
-                    "Description of Goods or Services": f"{r} ({r})",
-                    "Amount Excluding VAT (Rs.)": f"{int(r):,}.00"
+                    "Description of Goods or Services": f"{r[2]} ({r[1]})",
+                    "Amount Excluding VAT (Rs.)": f"{int(r[3]):,}.00"
                 })
             st.table(table_data)
             
@@ -233,4 +233,6 @@ with main_right:
             export_raw_data = []
             for r in rows:
                 export_raw_data.append({
-                    "Description": r, "Category": r,
+                    "Description": r[2], 
+                    "Category": r[1],
+                    "Amount Excluding VAT": int(r[3]), 
