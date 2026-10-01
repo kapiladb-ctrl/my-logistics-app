@@ -1,5 +1,6 @@
 import streamlit as st
 import sqlite3
+import math
 from datetime import datetime
 
 DB_NAME = "billing_system.db"
@@ -27,7 +28,7 @@ init_database()
 # --- Page Configuration ---
 st.set_page_config(page_title="Logistics Invoice System", layout="wide")
 st.title("🚢 Dynamic Logistics Invoice & Tax System")
-st.caption("Auto-Calculates LKR Conversions, 2.5% SSCL, and 18% VAT with Strict Integer Rounding")
+st.caption("Auto-Calculates LKR Conversions, SSCL Gross-Up Formulas, and 18% VAT with Strict Roundup Logic")
 
 # --- Global Settings Sidebar ---
 st.sidebar.header("Global Configurations")
@@ -84,13 +85,21 @@ with st.form("invoice_form", clear_on_submit=True):
 if submit_button:
     has_vat = "NON VAT" not in category
     
-    # Precise whole-integer formatting rules matching your spreadsheet rules
+    # 1. Base Amount (Strictly Rounded Integer)
     amount_lkr = int(round(base_amount))
-    sscl_tax = int(round(amount_lkr * 0.025))
-    vat_tax = int(round((amount_lkr + sscl_tax) * 0.18)) if has_vat else 0
+    
+    # 2. SSCL Tax: Implements your exact ROUNDUP(Base/97.5*2.5, 0) logic
+    sscl_raw = (base_amount / 97.5) * 2.5
+    sscl_tax = int(math.ceil(sscl_raw))  # math.ceil forces any decimal point forward (e.g. 85.01 -> 86)
+    
+    # 3. Cascading Tax Foundation Rule: VAT is charged on (Base + SSCL)
+    vat_base = amount_lkr + sscl_tax
+    vat_tax = int(math.ceil(vat_base * 0.18)) if has_vat else 0  # Also applies the ceil roundup for VAT decimal points
+    
+    # 4. Net Final Grand Total
     grand_total = amount_lkr + sscl_tax + vat_tax
     
-    # Save to cloud session state database simulation
+    # Save to local session state database simulation
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
     cursor.execute("""
@@ -115,7 +124,6 @@ totals = cursor.fetchone()
 conn.close()
 
 if rows:
-    # Display interactive data grid table
     table_data = []
     for r in rows:
         table_data.append({
@@ -128,10 +136,10 @@ if rows:
     st.markdown("---")
     st.subheader("3. Continuous Calculated Ledger Aggregates")
     
-    subtotal = totals[0] or 0
-    total_sscl = totals[1] or 0
-    total_vat = totals[2] or 0
-    grand_final = totals[3] or 0
+    subtotal = totals[0] if totals[0] else 0
+    total_sscl = totals[1] if totals[1] else 0
+    total_vat = totals[2] if totals[2] else 0
+    grand_final = totals[3] if totals[3] else 0
     
     col1, col2, col3, col4 = st.columns(4)
     col1.metric("Subtotal Amount", f"LKR {subtotal:,}")
@@ -148,3 +156,4 @@ if rows:
         st.rerun()
 else:
     st.info("The invoice sheet is currently empty. Input values above to generate automated spreadsheet matrix lines.")
+
