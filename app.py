@@ -208,10 +208,11 @@ with main_right:
             st.write(f"**Billing Address:** {purchaser_addr}")
             
             table_data = []
-            for r in rows:
+            for item in rows:
+                item_id, item_cat, item_name, item_base, item_sscl, item_vat, item_total = item
                 table_data.append({
-                    "Description of Goods or Services": f"{r[2]} ({r[1]})",
-                    "Amount Excluding VAT (Rs.)": f"{int(r[3]):,}.00"
+                    "Description of Goods or Services": f"{item_name} ({item_cat})",
+                    "Amount Excluding VAT (Rs.)": f"{int(item_base):,}.00"
                 })
             st.table(table_data)
             
@@ -231,8 +232,4 @@ with main_right:
         # VARIANT 2: RAW EXCEL DOWNLOAD
         else:
             export_raw_data = []
-            for r in rows:
-                export_raw_data.append({
-                    "Description": r[2], 
-                    "Category": r[1],
-                    "Amount Excluding VAT": int(r[3]), 
+            for item in rows:
