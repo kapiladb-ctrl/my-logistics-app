@@ -87,7 +87,7 @@ with main_left:
     st.markdown("---")
     st.subheader("🛠️ Maintenance Controls")
     
-    # PERMANENTLY UNHIDDEN MAINTENANCE UTILITIES
+    # PERMANENTLY UNHIDDEN CLEAR BUTTON
     if st.button("🗑️ Clear Current Invoice Sheet", type="secondary", use_container_width=True):
         conn = sqlite3.connect(DB_NAME)
         cursor = conn.cursor()
