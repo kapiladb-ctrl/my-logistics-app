@@ -149,7 +149,7 @@ with main_right:
             col1, col2 = st.columns(2)
             with col1: start_date = st.date_input("From Date", datetime(2026, 9, 2))
             with col2: end_date = st.date_input("To Date", datetime(2026, 10, 2))
-            days = abs((end_date - start_date).days)
+            days = abs(1+(end_date - start_date).days)
             base_amount = total_amount_lkr * factor * days
 
         submit_button = st.form_submit_button("⚡ Compute & Commit Line")
