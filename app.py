@@ -203,7 +203,7 @@ with main_right:
     totals_row = cursor.fetchone()
     conn.close()
 
-    # Fixed Variable Extraction: Looks inside the tuple indices correctly safely
+    # --- RELIABLE VALUE PARSER ENGINE ---
     subtotal = int(totals_row[0]) if totals_row and totals_row[0] is not None else 0
     total_sscl = int(totals_row[1]) if totals_row and totals_row[1] is not None else 0
     total_vat = int(totals_row[2]) if totals_row and totals_row[2] is not None else 0
@@ -225,9 +225,11 @@ with main_right:
             st.table(table_data)
             
             st.markdown("---")
-            # --- FULLY LOGIC RE-CONNECTED SUMMARY DISPLAY ---
+            # --- PERFECTLY WORKING MAPPED COLUMNS ---
             col_t1, col_t2 = st.columns(2)
             with col_t1:
                 st.write("**Total Value of Supply:**")
                 st.write("**SSCL (2.5%):**")
                 st.write("**VAT Amount (18%):**")
+                st.subheader("**Total Amount including VAT:**")
+            with col_t2:
