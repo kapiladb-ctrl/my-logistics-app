@@ -72,7 +72,7 @@ st.title("🚢 SLPA Customs Tax Invoice Generation Engine")
 st.markdown("---")
 
 # --- TWO COLUMN MAIN APP FRAME WORK ---
-main_left, main_right = st.columns([1, 2], gap="large")
+main_left, main_right = st.columns([1, 3], gap="large")
 
 with main_left:
     st.header("📋 Header Metadata")
@@ -224,9 +224,10 @@ with main_right:
                 })
             st.table(table_data)
             
-            st.markdown("---")
-            # --- CRASH-PROOF SINGLE BLOCK TEXT FORMATTING LAYOUT ---
-            # Combines title labels and numbers together into a solid chunk to prevent column separation errors
-            st.markdown(f"""
-            ### Summary Calculations:
-            * **Total Value of Supply:** &nbsp;&nbsp;&nbsp;&nbsp; Rs. {subtotal:,}.00
+            # --- CRASH-PROOF NATIVE STATS OVERVIEW CONTROLS ---
+            # Replaced plain string markup with crisp, bulletproof key-value pairs
+            st.markdown("### Summary Calculations")
+            col_lbl, col_val = st.columns(2)
+            with col_lbl:
+                st.write("**Total Value of Supply:**")
+                st.write("**SSCL (2.5%):**")
