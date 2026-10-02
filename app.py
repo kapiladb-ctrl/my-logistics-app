@@ -147,8 +147,8 @@ with main_right:
             total_amount_lkr = st.number_input("Total Amount (LKR Source)", value=12879.0)
             factor = st.number_input("Rate Factor (e.g., 1%)", value=0.01, format="%.2f")
             col1, col2 = st.columns(2)
-            with col1: start_date = st.date_input("From Date", datetime(2026, 6, 23))
-            with col2: end_date = st.date_input("To Date", datetime(2026, 7, 3))
+            with col1: start_date = st.date_input("From Date", datetime(2026, 9, 2))
+            with col2: end_date = st.date_input("To Date", datetime(2026, 10, 2))
             days = abs((end_date - start_date).days)
             base_amount = total_amount_lkr * factor * days
 
