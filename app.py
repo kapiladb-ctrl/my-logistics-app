@@ -72,7 +72,7 @@ st.title("🚢 SLPA Customs Tax Invoice Generation Engine")
 st.markdown("---")
 
 # --- TWO COLUMN MAIN APP FRAME WORK ---
-main_left, main_right = st.columns([1, 3], gap="large")
+main_left, main_right = st.columns([1, 2], gap="large")
 
 with main_left:
     st.header("📋 Header Metadata")
@@ -87,6 +87,7 @@ with main_left:
     st.markdown("---")
     st.subheader("🛠️ Maintenance Controls")
     
+    # PERMANENTLY UNHIDDEN CLEAR BUTTON
     if st.button("🗑️ Clear Current Invoice Sheet", type="secondary", use_container_width=True):
         conn = sqlite3.connect(DB_NAME)
         cursor = conn.cursor()
@@ -192,43 +193,48 @@ with main_right:
         conn.close()
         st.success("Calculated and added successfully!")
 
-    # =====================================================================
-    #   SECTION 2: OUTPUT SELECTION CARD PANEL
-    # =====================================================================
-    st.markdown("---")
-    st.header("2. Choose Output Format Options")
-    output_choice = st.radio("Select Output Format Variant:", ["Visual Invoice Sheet (Form Look)", "Raw Excel Spreadsheet (.xlsx)"])
+# =====================================================================
+#   SECTION 2: OUTPUT SELECTION CARD PANEL
+# =====================================================================
+st.markdown("---")
+st.header("2. Choose Output Format Options")
+output_choice = st.radio("Select Output Format Variant:", ["Visual Invoice Sheet (Form Look)", "Raw Excel Spreadsheet (.xlsx)"])
 
-    # --- CRASH-PROOF DATA DICTIONARY ENGINE ---
-    # Connects columns to explicit text titles instead of numbers to stop syntax crashes
-    conn = sqlite3.connect(DB_NAME)
-    conn.row_factory = sqlite3.Row  
-    cursor = conn.cursor()
-    
-    cursor.execute("SELECT category, charge_name, amount_lkr, sscl_tax, vat_tax, grand_total FROM invoices")
-    rows = cursor.fetchall()
-    
-    cursor.execute("SELECT SUM(amount_lkr) as total_base, SUM(sscl_tax) as total_sscl, SUM(vat_tax) as total_vat, SUM(grand_total) as total_grand FROM invoices")
-    totals_row = cursor.fetchone()
-    conn.close()
+# --- CRASH-PROOF RE-MAPPED ROW DICTIONARY FACTORY ENGINE ---
+conn = sqlite3.connect(DB_NAME)
+conn.row_factory = sqlite3.Row  
+cursor = conn.cursor()
 
-    # Extract data securely using explicit word keys with safe zeros fallback
-    subtotal = int(totals_row["total_base"]) if totals_row and totals_row["total_base"] is not None else 0
-    total_sscl = int(totals_row["total_sscl"]) if totals_row and totals_row["total_sscl"] is not None else 0
-    total_vat = int(totals_row["total_vat"]) if totals_row and totals_row["total_vat"] is not None else 0
-    grand_final = int(totals_row["total_grand"]) if totals_row and totals_row["total_grand"] is not None else 0
+cursor.execute("SELECT category, charge_name, amount_lkr, sscl_tax, vat_tax, grand_total FROM invoices")
+rows = cursor.fetchall()
 
-    if rows:
-        if output_choice == "Visual Invoice Sheet (Form Look)":
-            st.info(f"📄 **TAX INVOICE** | Serial No: {serial_no} | Purchases TIN: {purchaser_tin}")
-            st.write(f"**Customer Name:** {purchaser_name}")
-            st.write(f"**Billing Address:** {purchaser_addr}")
-            
-            table_data = []
-            for row in rows:
-                table_data.append({
-                    "Description of Goods or Services": f"{row['charge_name']} ({row['category']})",
-                    "Amount Excluding VAT (Rs.)": f"{int(row['amount_lkr']):,}.00"
-                })
-            st.table(table_data)
-            
+cursor.execute("SELECT SUM(amount_lkr) as total_base, SUM(sscl_tax) as total_sscl, SUM(vat_tax) as total_vat, SUM(grand_total) as total_grand FROM invoices")
+totals_row = cursor.fetchone()
+conn.close()
+
+# Secure fallback validation mapping
+subtotal = int(totals_row["total_base"]) if totals_row and totals_row["total_base"] is not None else 0
+total_sscl = int(totals_row["total_sscl"]) if totals_row and totals_row["total_sscl"] is not None else 0
+total_vat = int(totals_row["total_vat"]) if totals_row and totals_row["total_vat"] is not None else 0
+grand_final = int(totals_row["total_grand"]) if totals_row and totals_row["total_grand"] is not None else 0
+
+if rows:
+    if output_choice == "Visual Invoice Sheet (Form Look)":
+        st.info(f"📄 **TAX INVOICE** | Serial No: {serial_no} | Purchases TIN: {purchaser_tin}")
+        st.write(f"**Customer Name:** {purchaser_name}")
+        st.write(f"**Billing Address:** {purchaser_addr}")
+        
+        table_data = []
+        for row in rows:
+            table_data.append({
+                "Description of Goods or Services": f"{row['charge_name']} ({row['category']})",
+                "Amount Excluding VAT (Rs.)": f"{int(row['amount_lkr']):,}.00"
+            })
+        st.table(table_data)
+        
+        st.markdown("---")
+        st.subheader("Summary Calculations")
+        
+        # --- FIXED-RATIO COLUMNS THAT ALWAYS ALIGN SIDE-BY-SIDE PERFECTLY ---
+        lbl_col, val_col = st.columns([3, 2])
+        with lbl_col:
