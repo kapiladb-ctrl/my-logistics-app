@@ -72,7 +72,7 @@ st.title("🚢 SLPA Customs Tax Invoice Generation Engine")
 st.markdown("---")
 
 # --- TWO COLUMN MAIN APP FRAME WORK ---
-main_left, main_right = st.columns([1, 2], gap="large")
+main_left, main_right = st.columns([1, 3], gap="large")
 
 with main_left:
     st.header("📋 Header Metadata")
@@ -203,16 +203,12 @@ with main_right:
     totals_row = cursor.fetchone()
     conn.close()
 
-    subtotal = 0
-    total_sscl = 0
-    total_vat = 0
-    grand_final = 0
-
-    if totals_row and totals_row is not None:
-        subtotal = int(totals_row) if totals_row is not None else 0
-        total_sscl = int(totals_row) if totals_row is not None else 0
-        total_vat = int(totals_row) if totals_row is not None else 0
-        grand_final = int(totals_row) if totals_row is not None else 0
+    # --- CRASH-PROOF VARIABLE ASSIGNMENT MATRIX ---
+    # Safe check: loops internally to map zeroes if positions are empty
+    subtotal = int(totals_row[0]) if totals_row and totals_row[0] is not None else 0
+    total_sscl = int(totals_row[1]) if totals_row and totals_row[1] is not None else 0
+    total_vat = int(totals_row[2]) if totals_row and totals_row[2] is not None else 0
+    grand_final = int(totals_row[3]) if totals_row and totals_row[3] is not None else 0
 
     if rows:
         if output_choice == "Visual Invoice Sheet (Form Look)":
@@ -236,5 +232,3 @@ with main_right:
                 st.write("**SSCL (2.5%):**")
                 st.write("**VAT Amount (18%):**")
                 st.subheader("**Total Amount including VAT:**")
-            with col_t2:
-                st.write(f"LKR {subtotal:,}.00")
