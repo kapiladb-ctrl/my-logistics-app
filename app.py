@@ -106,7 +106,7 @@ with main_left:
 
 with main_right:
     st.header("1. Input Invoice Details")
-    category = st.selectbox("Select Item Category Type", [
+    category = st.selectbox("Select Billing Category Type", [
         "Amendment Charge (NON VAT)", 
         "Amendment Charge (VAT)",
         "DC PENALTY Charge",
@@ -189,7 +189,7 @@ with main_right:
         st.success("Calculated and added successfully!")
 
     # =====================================================================
-    #   PINNED UPPER RIGHT POSITION: Moves Section 2 directly into the top right space
+    #   PINNED UPPER RIGHT POSITION: Section 2 fills the empty right side space
     # =====================================================================
     st.markdown("---")
     st.header("2. Choose Output Format Options")
@@ -209,10 +209,10 @@ with main_right:
     grand_final = 0
 
     if totals_row and totals_row is not None:
-        subtotal = int(totals_row[0]) if totals_row[0] is not None else 0
-        total_sscl = int(totals_row[1]) if totals_row[1] is not None else 0
-        total_vat = int(totals_row[2]) if totals_row[2] is not None else 0
-        grand_final = int(totals_row[3]) if totals_row[3] is not None else 0
+        subtotal = int(totals_row) if totals_row is not None else 0
+        total_sscl = int(totals_row) if totals_row is not None else 0
+        total_vat = int(totals_row) if totals_row is not None else 0
+        grand_final = int(totals_row) if totals_row is not None else 0
 
     if rows:
         if output_choice == "Visual Invoice Sheet (Form Look)":
@@ -237,3 +237,4 @@ with main_right:
                 st.write("**VAT Amount (18%):**")
                 st.subheader("**Total Amount including VAT:**")
             with col_t2:
+                st.write(f"LKR {subtotal:,}.00")
