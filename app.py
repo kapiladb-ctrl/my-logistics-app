@@ -68,7 +68,7 @@ for f in all_files:
 if top_banner_file:
     st.image(top_banner_file, use_container_width=True)
 
-st.title("🚢 SLPA - Port Charges - IMPORT 🚢")
+st.title("🚢 SLPA Customs Tax Invoice Generation Engine")
 st.markdown("---")
 
 # --- TWO COLUMN APP FRAME WORK ---
@@ -76,10 +76,10 @@ main_left, main_right = st.columns([1, 3], gap="large")
 
 with main_left:
     st.header("📋 Header Metadata")
-    serial_no = st.text_input("Serial No", value="xxxxx")
-    purchaser_tin = st.text_input("Purchases TIN", value="xxxxxxxxx")
-    purchaser_name = st.text_input("Purchases Name", value="xxxxxxxxxxxxxxxxxxxxxxxxxx")
-    purchaser_addr = st.text_area("Address", value="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
+    serial_no = st.text_input("Serial No", value="29258")
+    purchaser_tin = st.text_input("Purchases TIN", value="103252347")
+    purchaser_name = st.text_input("Purchases Name", value="M/S. LANKA INTERNATIONAL PORT PVT LTD")
+    purchaser_addr = st.text_area("Address", value="NO. 1, LEVEL 6, VALTING TOWER\nNAVAM MAWATHA, COLOMBO 02")
     
     st.markdown("---")
     dollar_rate = st.number_input("Global USD Exchange Rate", value=333.85, step=0.01)
@@ -116,7 +116,7 @@ with main_right:
         "Pass Cancellation Charges"
     ])
 
-with st.form("invoice_form", clear_on_submit=True):
+    with st.form("invoice_form", clear_on_submit=True):
         if "Amendment" in category or "DC PENALTY" in category or "Pass Cancellation" in category:
             if "Amendment" in category:
                 default_name = "Ammendment charge"
@@ -147,9 +147,9 @@ with st.form("invoice_form", clear_on_submit=True):
             total_amount_lkr = st.number_input("Total Amount (LKR Source)", value=12879.0)
             factor = st.number_input("Rate Factor (e.g., 1%)", value=0.01, format="%.2f")
             col1, col2 = st.columns(2)
-            with col1: start_date = st.date_input("From Date", datetime(2026, 9, 2))
-            with col2: end_date = st.date_input("To Date", datetime(2026, 10, 2))
-            days = abs(1+(end_date - start_date).days)
+            with col1: start_date = st.date_input("From Date", datetime(2026, 6, 23))
+            with col2: end_date = st.date_input("To Date", datetime(2026, 7, 3))
+            days = abs((end_date - start_date).days)
             base_amount = total_amount_lkr * factor * days
 
         submit_button = st.form_submit_button("⚡ Compute & Commit Line")
