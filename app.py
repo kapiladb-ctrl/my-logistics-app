@@ -72,7 +72,7 @@ st.title("🚢 SLPA Customs Tax Invoice Generation Engine")
 st.markdown("---")
 
 # --- TWO COLUMN MAIN APP FRAME WORK ---
-main_left, main_right = st.columns([1, 3], gap="large")
+main_left, main_right = st.columns([1, 2], gap="large")
 
 with main_left:
     st.header("📋 Header Metadata")
