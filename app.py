@@ -72,7 +72,7 @@ st.title("🚢 SLPA Customs Tax Invoice Generation Engine")
 st.markdown("---")
 
 # --- TWO COLUMN APP FRAME WORK ---
-main_left, main_right = st.columns([1, 3], gap="large")
+main_left, main_right = st.columns([1, 2], gap="large")
 
 with main_left:
     st.header("📋 Header Metadata")
@@ -146,7 +146,6 @@ with main_right:
             total_amount_lkr = st.number_input("Total Amount (LKR Source)", value=12879.0)
             factor = st.number_input("Rate Factor (e.g., 1%)", value=0.01, format="%.2f")
             
-            # DYNAMIC CALENDAR SELECTOR: Set to exactly 30 days before today and today's date
             today_date = date.today()
             one_month_ago = today_date - timedelta(days=30)
             
@@ -156,7 +155,6 @@ with main_right:
             with col2: 
                 end_date = st.date_input("To Date", today_date)
             
-            # INCLUSIVE DATE MATH ENGINE: Adds 1 to count both the start day and end day completely
             days = abs((end_date - start_date).days) + 1
             base_amount = total_amount_lkr * factor * days
 
@@ -190,7 +188,9 @@ with main_right:
         conn.close()
         st.success("Calculated and added successfully!")
 
-# --- OUTPUT MANAGEMENT FRAMEWORK ---
+# =====================================================================
+#   FULL PAGE BOTTOM LAYOUT: Section 2 pulled outside side columns
+# =====================================================================
 st.markdown("---")
 st.header("2. Choose Output Format Options")
 output_choice = st.radio("Select Output Format Variant:", ["Visual Invoice Sheet (Form Look)", "Raw Excel Spreadsheet (.xlsx)"])
@@ -208,11 +208,11 @@ total_sscl = 0
 total_vat = 0
 grand_final = 0
 
-if totals_row and totals_row[0] is not None:
-    subtotal = int(totals_row[0])
-    total_sscl = int(totals_row[1])
-    total_vat = int(totals_row[2])
-    grand_final = int(totals_row[3])
+if totals_row and totals_row is not None:
+    subtotal = int(totals_row[0]) if totals_row[0] is not None else 0
+    total_sscl = int(totals_row[1]) if totals_row[1] is not None else 0
+    total_vat = int(totals_row[2]) if totals_row[2] is not None else 0
+    grand_final = int(totals_row[3]) if totals_row[3] is not None else 0
 
 if rows:
     if output_choice == "Visual Invoice Sheet (Form Look)":
@@ -243,6 +243,3 @@ if rows:
             st.subheader(f"LKR {grand_final:,}.00")
 
     else:
-        export_raw_data = []
-        for row in rows:
-            r_id, r_cat, r_name, r_base, r_sscl, r_vat, r_tot = row
