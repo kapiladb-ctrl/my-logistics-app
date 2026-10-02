@@ -225,11 +225,8 @@ with main_right:
             st.table(table_data)
             
             st.markdown("---")
-            # --- PERFECTLY WORKING MAPPED COLUMNS ---
-            col_t1, col_t2 = st.columns(2)
-            with col_t1:
-                st.write("**Total Value of Supply:**")
-                st.write("**SSCL (2.5%):**")
-                st.write("**VAT Amount (18%):**")
-                st.subheader("**Total Amount including VAT:**")
-            with col_t2:
+            # --- CRASH-PROOF SINGLE BLOCK TEXT FORMATTING LAYOUT ---
+            # Combines title labels and numbers together into a solid chunk to prevent column separation errors
+            st.markdown(f"""
+            ### Summary Calculations:
+            * **Total Value of Supply:** &nbsp;&nbsp;&nbsp;&nbsp; Rs. {subtotal:,}.00
