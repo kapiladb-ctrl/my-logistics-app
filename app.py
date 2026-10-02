@@ -144,7 +144,7 @@ with main_right:
 
         elif "Administrative" in category:
             charge_name = st.text_input("Description of Goods or Services", value="Penalty Charge")
-            total_amount_lkr = st.number_input("Total Amount (LKR Source)", value=12879.0)
+            total_amount_lkr = st.number_input("Total Amount (LKR Source)", value=00000.0)
             factor = st.number_input("Rate Factor (e.g., 1%)", value=0.01, format="%.2f")
             col1, col2 = st.columns(2)
             with col1: start_date = st.date_input("From Date", datetime(2026, 9, 3))
