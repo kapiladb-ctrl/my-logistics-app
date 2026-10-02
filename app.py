@@ -68,7 +68,7 @@ for f in all_files:
 if top_banner_file:
     st.image(top_banner_file, use_container_width=True)
 
-st.title("🚢 SLPA Customs Tax Invoice Generation Engine")
+st.title("🚢 SLPA CHARGES - IMPORT FCL 🚢")
 st.markdown("---")
 
 # --- TWO COLUMN APP FRAME WORK ---
