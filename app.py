@@ -71,8 +71,8 @@ if top_banner_file:
 st.title("🚢 SLPA Customs Tax Invoice Generation Engine")
 st.markdown("---")
 
-# --- TWO COLUMN APP FRAME WORK ---
-main_left, main_right = st.columns([1, 3], gap="large")
+# --- TWO COLUMN MAIN APP FRAME WORK ---
+main_left, main_right = st.columns([1, 2], gap="large")
 
 with main_left:
     st.header("📋 Header Metadata")
@@ -151,11 +151,11 @@ with main_right:
             
             col1, col2 = st.columns(2)
             with col1: 
-                start_date = st.date_input("From Date", one_month_ago)
+                st.date_input("From Date", one_month_ago)
             with col2: 
-                end_date = st.date_input("To Date", today_date)
+                st.date_input("To Date", today_date)
             
-            days = abs((end_date - start_date).days) + 1
+            days = abs((today_date - one_month_ago).days) + 1
             base_amount = total_amount_lkr * factor * days
 
         submit_button = st.form_submit_button("⚡ Compute & Commit Line")
@@ -188,62 +188,52 @@ with main_right:
         conn.close()
         st.success("Calculated and added successfully!")
 
-# =====================================================================
-#   FULL PAGE BOTTOM LAYOUT: Section 2 pulled outside side columns
-# =====================================================================
-st.markdown("---")
-st.header("2. Choose Output Format Options")
-output_choice = st.radio("Select Output Format Variant:", ["Visual Invoice Sheet (Form Look)", "Raw Excel Spreadsheet (.xlsx)"])
+    # =====================================================================
+    #   PINNED UPPER RIGHT POSITION: Moves Section 2 directly into the top right space
+    # =====================================================================
+    st.markdown("---")
+    st.header("2. Choose Output Format Options")
+    output_choice = st.radio("Select Output Format Variant:", ["Visual Invoice Sheet (Form Look)", "Raw Excel Spreadsheet (.xlsx)"])
 
-conn = sqlite3.connect(DB_NAME)
-cursor = conn.cursor()
-cursor.execute("SELECT * FROM invoices")
-rows = cursor.fetchall()
-cursor.execute("SELECT SUM(amount_lkr), SUM(sscl_tax), SUM(vat_tax), SUM(grand_total) FROM invoices")
-totals_row = cursor.fetchone()
-conn.close()
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM invoices")
+    rows = cursor.fetchall()
+    cursor.execute("SELECT SUM(amount_lkr), SUM(sscl_tax), SUM(vat_tax), SUM(grand_total) FROM invoices")
+    totals_row = cursor.fetchone()
+    conn.close()
 
-# Safe variable extraction defaults
-subtotal = 0
-total_sscl = 0
-total_vat = 0
-grand_final = 0
+    subtotal = 0
+    total_sscl = 0
+    total_vat = 0
+    grand_final = 0
 
-if totals_row and totals_row[0] is not None:
-    subtotal = int(totals_row[0])
-    total_sscl = int(totals_row[1])
-    total_vat = int(totals_row[2])
-    grand_final = int(totals_row[3])
+    if totals_row and totals_row is not None:
+        subtotal = int(totals_row[0]) if totals_row[0] is not None else 0
+        total_sscl = int(totals_row[1]) if totals_row[1] is not None else 0
+        total_vat = int(totals_row[2]) if totals_row[2] is not None else 0
+        grand_final = int(totals_row[3]) if totals_row[3] is not None else 0
 
-if rows:
-    # VARIANT 1: VISUAL NATIVE FORM LOOK
-    if output_choice == "Visual Invoice Sheet (Form Look)":
-        st.info(f"📄 **TAX INVOICE** | Serial No: {serial_no} | Purchases TIN: {purchaser_tin}")
-        st.write(f"**Customer Name:** {purchaser_name}")
-        st.write(f"**Billing Address:** {purchaser_addr}")
-        
-        table_data = []
-        for row in rows:
-            r_id, r_cat, r_name, r_base, r_sscl, r_vat, r_tot = row
-            table_data.append({
-                "Description of Goods or Services": f"{r_name} ({r_cat})",
-                "Amount Excluding VAT (Rs.)": f"{int(r_base):,}.00"
-            })
-        st.table(table_data)
-        
-        st.markdown("---")
-        col_t1, col_t2 = st.columns(2)
-        with col_t1:
-            st.write("**Total Value of Supply:**")
-            st.write("**SSCL (2.5%):**")
-            st.write("**VAT Amount (18%):**")
-            st.subheader("**Total Amount including VAT:**")
-        with col_t2:
-            st.write(f"LKR {subtotal:,}.00")
-            st.write(f"LKR {total_sscl:,}.00")
-            st.write(f"LKR {total_vat:,}.00")
-            st.subheader(f"LKR {grand_final:,}.00")
-
-    # VARIANT 2: RAW EXCEL DOWNLOAD
-    else:
-        export_raw_data = []
+    if rows:
+        if output_choice == "Visual Invoice Sheet (Form Look)":
+            st.info(f"📄 **TAX INVOICE** | Serial No: {serial_no} | Purchases TIN: {purchaser_tin}")
+            st.write(f"**Customer Name:** {purchaser_name}")
+            st.write(f"**Billing Address:** {purchaser_addr}")
+            
+            table_data = []
+            for row in rows:
+                r_id, r_cat, r_name, r_base, r_sscl, r_vat, r_tot = row
+                table_data.append({
+                    "Description of Goods or Services": f"{r_name} ({r_cat})",
+                    "Amount Excluding VAT (Rs.)": f"{int(r_base):,}.00"
+                })
+            st.table(table_data)
+            
+            st.markdown("---")
+            col_t1, col_t2 = st.columns(2)
+            with col_t1:
+                st.write("**Total Value of Supply:**")
+                st.write("**SSCL (2.5%):**")
+                st.write("**VAT Amount (18%):**")
+                st.subheader("**Total Amount including VAT:**")
+            with col_t2:
