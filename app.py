@@ -72,7 +72,7 @@ st.title("🚢 SLPA Customs Tax Invoice Generation Engine")
 st.markdown("---")
 
 # --- TWO COLUMN MAIN APP FRAME WORK ---
-main_left, main_right = st.columns([1, 2], gap="large")
+main_left, main_right = st.columns([1, 3], gap="large")
 
 with main_left:
     st.header("📋 Header Metadata")
@@ -87,7 +87,6 @@ with main_left:
     st.markdown("---")
     st.subheader("🛠️ Maintenance Controls")
     
-    # PERMANENTLY UNHIDDEN CLEAR BUTTON
     if st.button("🗑️ Clear Current Invoice Sheet", type="secondary", use_container_width=True):
         conn = sqlite3.connect(DB_NAME)
         cursor = conn.cursor()
@@ -200,7 +199,6 @@ st.markdown("---")
 st.header("2. Choose Output Format Options")
 output_choice = st.radio("Select Output Format Variant:", ["Visual Invoice Sheet (Form Look)", "Raw Excel Spreadsheet (.xlsx)"])
 
-# --- CRASH-PROOF RE-MAPPED ROW DICTIONARY FACTORY ENGINE ---
 conn = sqlite3.connect(DB_NAME)
 conn.row_factory = sqlite3.Row  
 cursor = conn.cursor()
@@ -212,7 +210,6 @@ cursor.execute("SELECT SUM(amount_lkr) as total_base, SUM(sscl_tax) as total_ssc
 totals_row = cursor.fetchone()
 conn.close()
 
-# Secure fallback validation mapping
 subtotal = int(totals_row["total_base"]) if totals_row and totals_row["total_base"] is not None else 0
 total_sscl = int(totals_row["total_sscl"]) if totals_row and totals_row["total_sscl"] is not None else 0
 total_vat = int(totals_row["total_vat"]) if totals_row and totals_row["total_vat"] is not None else 0
@@ -235,6 +232,9 @@ if rows:
         st.markdown("---")
         st.subheader("Summary Calculations")
         
-        # --- FIXED-RATIO COLUMNS THAT ALWAYS ALIGN SIDE-BY-SIDE PERFECTLY ---
-        lbl_col, val_col = st.columns([3, 2])
+        # --- FIXED SPACING GRID LAYOUT BLOCKS ---
+        lbl_col, val_col = st.columns([1, 1])
         with lbl_col:
+            st.write("**Total Value of Supply:**")
+            st.write("**SSCL (2.5%):**")
+            st.write("**VAT Amount (18%):**")
