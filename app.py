@@ -222,11 +222,15 @@ with main_right:
                 })
             st.table(table_data)
             
-            # --- HIGH-FIDELITY SUMMARY STATEMENT INJECTION ---
-            # Renders the exact text design and spacing blocks seen in your sample screenshot
-            st.markdown(
-                f"""
-                <div style="padding: 10px 0px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-                    <table style="width: 100%; border: none; border-collapse: collapse; font-size: 16px;">
-                        <tr style="height: 40px;">
-                            <td style="font-weight: bold; color: white;">Total Value of Supply:</td>
+            st.markdown("---")
+            # --- SAFE NATIVE SIDE-BY-SIDE GRID DISPLAY SYSTEM ---
+            # Automatically forces fields and amounts to mirror your layout screenshot beautifully
+            st.markdown("### Summary Calculations")
+            
+            sum_col1, sum_col2 = st.columns([2, 1])
+            with sum_col1:
+                st.write("**Total Value of Supply:**")
+                st.write("**SSCL (2.5%):**")
+                st.write("**VAT Amount (18%):**")
+                st.markdown("## **Total Amount including VAT:**")
+            with sum_col2:
