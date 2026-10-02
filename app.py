@@ -225,8 +225,11 @@ with main_right:
             st.table(table_data)
             
             st.markdown("---")
-            # --- CRASH-PROOF NATIVE STATS RIBCARD METRICS PANEL ---
-            # Completely removes fragile HTML, splitting totals into crystal-clear native system dashboards
             st.subheader("Summary Calculations")
-            m_col1, m_col2, m_col3, m_col4 = st.columns(4)
-            m_col1.metric("Total Value of Supply", f"Rs. {subtotal:,}.00")
+            
+            # --- FIXED-WIDTH COMPACT ROW DISPLAY PANEL ---
+            # Creates 4 clean, beautifully stacked text lines exactly like your target sample photo
+            r1_l, r1_r = st.columns([2, 1])
+            with r1_l: st.write("**Total Value of Supply:**")
+            with r1_r: st.write(f"LKR {subtotal:,}.00")
+                
