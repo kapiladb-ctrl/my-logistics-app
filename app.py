@@ -2,7 +2,7 @@ import streamlit as st
 import sqlite3
 import math
 import pandas as pd
-from datetime import datetime, timedelta
+from datetime import datetime
 import io
 import os
 
@@ -142,71 +142,15 @@ with main_right:
             p2_gp = st.number_input("PNL 2 Factor", value=46.0)
             base_amount = 0.0
 
-     elif "Administrative" in category:
-
-    charge_name = st.text_input(
-        "Description of Goods or Services",
-        value="Penalty Charge"
-    )
-
-    total_amount_lkr = st.number_input(
-        "Total Amount (LKR Source)",
-        value=12879.0
-    )
-
-    factor = st.number_input(
-        "Rate Factor (e.g., 1%)",
-        value=0.01,
-        format="%.2f"
-    )
-
-    # -----------------------------------------
-    # ADMINISTRATIVE CHARGE DATE CALCULATION
-    # -----------------------------------------
-
-    today = datetime.today().date()
-
-    # Calendar can go back exactly 1 month
-    # and cannot go beyond today
-    one_month_before = today - timedelta(days=30)
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-        start_date = st.date_input(
-            "From Date",
-            value=today,
-            min_value=one_month_before,
-            max_value=today
-        )
-
-    with col2:
-        end_date = st.date_input(
-            "To Date",
-            value=today,
-            min_value=one_month_before,
-            max_value=today
-        )
-
-    # -----------------------------------------
-    # COUNT BOTH START DATE AND END DATE
-    # Example:
-    # 2026/09/25 → 2026/10/01 = 7 days
-    # -----------------------------------------
-
-    if end_date >= start_date:
-
-        days = (end_date - start_date).days + 1
-
-    else:
-
-        days = 0
-        st.error("To Date cannot be before From Date.")
-
-    st.info(f"📅 Total Chargeable Days: **{days} days**")
-
-    # Administrative charge calculation
-    base_amount = total_amount_lkr * factor * days
+        elif "Administrative" in category:
+            charge_name = st.text_input("Description of Goods or Services", value="Penalty Charge")
+            total_amount_lkr = st.number_input("Total Amount (LKR Source)", value=12879.0)
+            factor = st.number_input("Rate Factor (e.g., 1%)", value=0.01, format="%.2f")
+            col1, col2 = st.columns(2)
+            with col1: start_date = st.date_input("From Date", datetime(2026, 6, 23))
+            with col2: end_date = st.date_input("To Date", datetime(2026, 7, 3))
+            days = abs((end_date - start_date).days)
+            base_amount = total_amount_lkr * factor * days
 
         submit_button = st.form_submit_button("⚡ Compute & Commit Line")
 
