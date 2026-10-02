@@ -79,7 +79,7 @@ with main_left:
     serial_no = st.text_input("Serial No", value="xxxxx")
     purchaser_tin = st.text_input("Purchases TIN", value="xxxxxxxxx")
     purchaser_name = st.text_input("Purchases Name", value="xxxxxxxxxxxxxxxxxxxxxxxxxx")
-    purchaser_addr = st.text_area("Address", value="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
+    purchaser_addr = st.text_area("Address", value="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
     
     st.markdown("---")
     dollar_rate = st.number_input("Global USD Exchange Rate", value=333.85, step=0.01)
