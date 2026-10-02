@@ -72,7 +72,7 @@ st.title("🚢 SLPA Customs Tax Invoice Generation Engine")
 st.markdown("---")
 
 # --- TWO COLUMN APP FRAME WORK ---
-main_left, main_right = st.columns([1, 2], gap="large")
+main_left, main_right = st.columns([1, 3], gap="large")
 
 with main_left:
     st.header("📋 Header Metadata")
@@ -203,18 +203,20 @@ cursor.execute("SELECT SUM(amount_lkr), SUM(sscl_tax), SUM(vat_tax), SUM(grand_t
 totals_row = cursor.fetchone()
 conn.close()
 
+# Safe variable extraction defaults
 subtotal = 0
 total_sscl = 0
 total_vat = 0
 grand_final = 0
 
-if totals_row and totals_row is not None:
-    subtotal = int(totals_row[0]) if totals_row[0] is not None else 0
-    total_sscl = int(totals_row[1]) if totals_row[1] is not None else 0
-    total_vat = int(totals_row[2]) if totals_row[2] is not None else 0
-    grand_final = int(totals_row[3]) if totals_row[3] is not None else 0
+if totals_row and totals_row[0] is not None:
+    subtotal = int(totals_row[0])
+    total_sscl = int(totals_row[1])
+    total_vat = int(totals_row[2])
+    grand_final = int(totals_row[3])
 
 if rows:
+    # VARIANT 1: VISUAL NATIVE FORM LOOK
     if output_choice == "Visual Invoice Sheet (Form Look)":
         st.info(f"📄 **TAX INVOICE** | Serial No: {serial_no} | Purchases TIN: {purchaser_tin}")
         st.write(f"**Customer Name:** {purchaser_name}")
@@ -242,4 +244,6 @@ if rows:
             st.write(f"LKR {total_vat:,}.00")
             st.subheader(f"LKR {grand_final:,}.00")
 
+    # VARIANT 2: RAW EXCEL DOWNLOAD
     else:
+        export_raw_data = []
