@@ -2,7 +2,7 @@ import streamlit as st
 import sqlite3
 import math
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, date, timedelta
 import io
 import os
 
@@ -87,7 +87,6 @@ with main_left:
     st.markdown("---")
     st.subheader("🛠️ Maintenance Controls")
     
-    # PERMANENTLY UNHIDDEN CLEAR BUTTON
     if st.button("🗑️ Clear Current Invoice Sheet", type="secondary", use_container_width=True):
         conn = sqlite3.connect(DB_NAME)
         cursor = conn.cursor()
@@ -146,10 +145,19 @@ with main_right:
             charge_name = st.text_input("Description of Goods or Services", value="Penalty Charge")
             total_amount_lkr = st.number_input("Total Amount (LKR Source)", value=12879.0)
             factor = st.number_input("Rate Factor (e.g., 1%)", value=0.01, format="%.2f")
+            
+            # DYNAMIC CALENDAR SELECTOR: Set to exactly 30 days before today and today's date
+            today_date = date.today()
+            one_month_ago = today_date - timedelta(days=30)
+            
             col1, col2 = st.columns(2)
-            with col1: start_date = st.date_input("From Date", datetime(2026, 6, 23))
-            with col2: end_date = st.date_input("To Date", datetime(2026, 7, 3))
-            days = abs((end_date - start_date).days)
+            with col1: 
+                start_date = st.date_input("From Date", one_month_ago)
+            with col2: 
+                end_date = st.date_input("To Date", today_date)
+            
+            # INCLUSIVE DATE MATH ENGINE: Adds 1 to count both the start day and end day completely
+            days = abs((end_date - start_date).days) + 1
             base_amount = total_amount_lkr * factor * days
 
         submit_button = st.form_submit_button("⚡ Compute & Commit Line")
@@ -182,62 +190,59 @@ with main_right:
         conn.close()
         st.success("Calculated and added successfully!")
 
-    # --- OUTPUT MANAGEMENT FRAMEWORK ---
-    st.markdown("---")
-    st.header("2. Choose Output Format Options")
-    output_choice = st.radio("Select Output Format Variant:", ["Visual Invoice Sheet (Form Look)", "Raw Excel Spreadsheet (.xlsx)"])
+# --- OUTPUT MANAGEMENT FRAMEWORK ---
+st.markdown("---")
+st.header("2. Choose Output Format Options")
+output_choice = st.radio("Select Output Format Variant:", ["Visual Invoice Sheet (Form Look)", "Raw Excel Spreadsheet (.xlsx)"])
 
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM invoices")
-    rows = cursor.fetchall()
-    cursor.execute("SELECT SUM(amount_lkr), SUM(sscl_tax), SUM(vat_tax), SUM(grand_total) FROM invoices")
-    totals_row = cursor.fetchone()
-    conn.close()
+conn = sqlite3.connect(DB_NAME)
+cursor = conn.cursor()
+cursor.execute("SELECT * FROM invoices")
+rows = cursor.fetchall()
+cursor.execute("SELECT SUM(amount_lkr), SUM(sscl_tax), SUM(vat_tax), SUM(grand_total) FROM invoices")
+totals_row = cursor.fetchone()
+conn.close()
 
-    # Safe Extraction Defaults
-    subtotal = 0
-    total_sscl = 0
-    total_vat = 0
-    grand_final = 0
+subtotal = 0
+total_sscl = 0
+total_vat = 0
+grand_final = 0
 
-    if totals_row and totals_row[0] is not None:
-        subtotal = int(totals_row[0])
-        total_sscl = int(totals_row[1])
-        total_vat = int(totals_row[2])
-        grand_final = int(totals_row[3])
+if totals_row and totals_row[0] is not None:
+    subtotal = int(totals_row[0])
+    total_sscl = int(totals_row[1])
+    total_vat = int(totals_row[2])
+    grand_final = int(totals_row[3])
 
-    if rows:
-        # VARIANT 1: VISUAL NATIVE FORM LOOK
-        if output_choice == "Visual Invoice Sheet (Form Look)":
-            st.info(f"📄 **TAX INVOICE** | Serial No: {serial_no} | Purchases TIN: {purchaser_tin}")
-            st.write(f"**Customer Name:** {purchaser_name}")
-            st.write(f"**Billing Address:** {purchaser_addr}")
-            
-            table_data = []
-            for row in rows:
-                r_id, r_cat, r_name, r_base, r_sscl, r_vat, r_tot = row
-                table_data.append({
-                    "Description of Goods or Services": f"{r_name} ({r_cat})",
-                    "Amount Excluding VAT (Rs.)": f"{int(r_base):,}.00"
-                })
-            st.table(table_data)
-            
-            st.markdown("---")
-            col_t1, col_t2 = st.columns(2)
-            with col_t1:
-                st.write("**Total Value of Supply:**")
-                st.write("**SSCL (2.5%):**")
-                st.write("**VAT Amount (18%):**")
-                st.subheader("**Total Amount including VAT:**")
-            with col_t2:
-                st.write(f"LKR {subtotal:,}.00")
-                st.write(f"LKR {total_sscl:,}.00")
-                st.write(f"LKR {total_vat:,}.00")
-                st.subheader(f"LKR {grand_final:,}.00")
+if rows:
+    if output_choice == "Visual Invoice Sheet (Form Look)":
+        st.info(f"📄 **TAX INVOICE** | Serial No: {serial_no} | Purchases TIN: {purchaser_tin}")
+        st.write(f"**Customer Name:** {purchaser_name}")
+        st.write(f"**Billing Address:** {purchaser_addr}")
+        
+        table_data = []
+        for row in rows:
+            r_id, r_cat, r_name, r_base, r_sscl, r_vat, r_tot = row
+            table_data.append({
+                "Description of Goods or Services": f"{r_name} ({r_cat})",
+                "Amount Excluding VAT (Rs.)": f"{int(r_base):,}.00"
+            })
+        st.table(table_data)
+        
+        st.markdown("---")
+        col_t1, col_t2 = st.columns(2)
+        with col_t1:
+            st.write("**Total Value of Supply:**")
+            st.write("**SSCL (2.5%):**")
+            st.write("**VAT Amount (18%):**")
+            st.subheader("**Total Amount including VAT:**")
+        with col_t2:
+            st.write(f"LKR {subtotal:,}.00")
+            st.write(f"LKR {total_sscl:,}.00")
+            st.write(f"LKR {total_vat:,}.00")
+            st.subheader(f"LKR {grand_final:,}.00")
 
-        # VARIANT 2: RAW EXCEL DOWNLOAD
-        else:
-            export_raw_data = []
-            for row in rows:
-                r_id, r_cat, r_name, r_base, r_sscl, r_vat, r_tot = row
+    else:
+        export_raw_data = []
+        for row in rows:
+            r_id, r_cat, r_name, r_base, r_sscl, r_vat, r_tot = row
