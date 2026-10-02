@@ -203,7 +203,7 @@ with main_right:
     totals_row = cursor.fetchone()
     conn.close()
 
-    # --- RELIABLE VALUE PARSER ENGINE ---
+    # --- CRASH-PROOF VALUE FALLBACKS ---
     subtotal = int(totals_row[0]) if totals_row and totals_row[0] is not None else 0
     total_sscl = int(totals_row[1]) if totals_row and totals_row[1] is not None else 0
     total_vat = int(totals_row[2]) if totals_row and totals_row[2] is not None else 0
@@ -211,8 +211,9 @@ with main_right:
 
     if rows:
         if output_choice == "Visual Invoice Sheet (Form Look)":
-            st.markdown(f"**Customer Name:** {purchaser_name}")
-            st.markdown(f"**Billing Address:** {purchaser_addr}")
+            st.info(f"📄 **TAX INVOICE** | Serial No: {serial_no} | Purchases TIN: {purchaser_tin}")
+            st.write(f"**Customer Name:** {purchaser_name}")
+            st.write(f"**Billing Address:** {purchaser_addr}")
             
             table_data = []
             for row in rows:
@@ -224,14 +225,11 @@ with main_right:
             st.table(table_data)
             
             st.markdown("---")
-            # --- SAFE NATIVE SIDE-BY-SIDE GRID DISPLAY SYSTEM ---
+            # --- CRASH-PROOF NATIVE NARROW MARKDOWN TABLE LAYOUT ---
+            # Locks labels and variables tight into single structural grid rows that cannot slip apart
             st.markdown("### Summary Calculations")
-            
-            sum_col1, sum_col2 = st.columns([1, 1])
-            with sum_col1:
-                st.write("**Total Value of Supply:**")
-                st.write("**SSCL (2.5%):**")
-                st.write("**VAT Amount (18%):**")
-                st.markdown("## **Total Amount including VAT:**")
-            with sum_col2:
-                st.write(f"LKR {subtotal:,}.00")
+            st.markdown(
+                f"""
+
+                | Metric Classification Type | Calculated Output Value (Rs.) |
+                | :--- | :--- |
