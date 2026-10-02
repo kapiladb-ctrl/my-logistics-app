@@ -203,7 +203,7 @@ with main_right:
     totals_row = cursor.fetchone()
     conn.close()
 
-    # --- CRASH-PROOF VALUE FALLBACKS ---
+    # --- RELIABLE VALUE PARSER ENGINE ---
     subtotal = int(totals_row[0]) if totals_row and totals_row[0] is not None else 0
     total_sscl = int(totals_row[1]) if totals_row and totals_row[1] is not None else 0
     total_vat = int(totals_row[2]) if totals_row and totals_row[2] is not None else 0
@@ -225,11 +225,8 @@ with main_right:
             st.table(table_data)
             
             st.markdown("---")
-            # --- CRASH-PROOF NATIVE NARROW MARKDOWN TABLE LAYOUT ---
-            # Locks labels and variables tight into single structural grid rows that cannot slip apart
-            st.markdown("### Summary Calculations")
-            st.markdown(
-                f"""
-
-                | Metric Classification Type | Calculated Output Value (Rs.) |
-                | :--- | :--- |
+            # --- CRASH-PROOF NATIVE STATS RIBCARD METRICS PANEL ---
+            # Completely removes fragile HTML, splitting totals into crystal-clear native system dashboards
+            st.subheader("Summary Calculations")
+            m_col1, m_col2, m_col3, m_col4 = st.columns(4)
+            m_col1.metric("Total Value of Supply", f"Rs. {subtotal:,}.00")
