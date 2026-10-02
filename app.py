@@ -2,7 +2,7 @@ import streamlit as st
 import sqlite3
 import math
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, date, timedelta
 import io
 import os
 
@@ -68,18 +68,18 @@ for f in all_files:
 if top_banner_file:
     st.image(top_banner_file, use_container_width=True)
 
-st.title("🚢 SLPA - Port Charges - IMPORT 🚢")
+st.title("🚢 SLPA Customs Tax Invoice Generation Engine")
 st.markdown("---")
 
-# --- TWO COLUMN APP FRAME WORK ---
+# --- TWO COLUMN MAIN APP FRAME WORK ---
 main_left, main_right = st.columns([1, 3], gap="large")
 
 with main_left:
     st.header("📋 Header Metadata")
-    serial_no = st.text_input("Serial No", value="xxxxx")
-    purchaser_tin = st.text_input("Purchases TIN", value="xxxxxxxxx")
-    purchaser_name = st.text_input("Purchases Name", value="xxxxxxxxxxxxxxxxxxxxxxxxxx")
-    purchaser_addr = st.text_area("Address", value="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
+    serial_no = st.text_input("Serial No", value="29258")
+    purchaser_tin = st.text_input("Purchases TIN", value="103252347")
+    purchaser_name = st.text_input("Purchases Name", value="M/S. LANKA INTERNATIONAL PORT PVT LTD")
+    purchaser_addr = st.text_area("Address", value="NO. 1, LEVEL 6, VALTING TOWER\nNAVAM MAWATHA, COLOMBO 02")
     
     st.markdown("---")
     dollar_rate = st.number_input("Global USD Exchange Rate", value=333.85, step=0.01)
@@ -87,7 +87,7 @@ with main_left:
     st.markdown("---")
     st.subheader("🛠️ Maintenance Controls")
     
-    # PERMANENTLY UNHIDDEN CLEAR BUTTON
+    # PERMANENTLY UNHIDDEN MAINTENANCE UTILITIES
     if st.button("🗑️ Clear Current Invoice Sheet", type="secondary", use_container_width=True):
         conn = sqlite3.connect(DB_NAME)
         cursor = conn.cursor()
@@ -107,7 +107,7 @@ with main_left:
 
 with main_right:
     st.header("1. Input Invoice Details")
-    category = st.selectbox("Select Item Category Type", [
+    category = st.selectbox("Select Billing Category Type", [
         "Amendment Charge (NON VAT)", 
         "Amendment Charge (VAT)",
         "DC PENALTY Charge",
@@ -189,7 +189,7 @@ with main_right:
 
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM invoices")
+    cursor.execute("SELECT id, category, charge_name, amount_lkr, sscl_tax, vat_tax, grand_total FROM invoices")
     rows = cursor.fetchall()
     cursor.execute("SELECT SUM(amount_lkr), SUM(sscl_tax), SUM(vat_tax), SUM(grand_total) FROM invoices")
     totals_row = cursor.fetchone()
@@ -207,6 +207,9 @@ with main_right:
         total_vat = int(totals_row[2])
         grand_final = int(totals_row[3])
 
+    # Dynamic adjustment parameters based on user rules
+    has_non_vat_item = any("NON VAT" in r[1] for r in rows) if rows else False
+
     if rows:
         # VARIANT 1: VISUAL NATIVE FORM LOOK
         if output_choice == "Visual Invoice Sheet (Form Look)":
@@ -217,27 +220,21 @@ with main_right:
             table_data = []
             for row in rows:
                 r_id, r_cat, r_name, r_base, r_sscl, r_vat, r_tot = row
+                # Show adjusted display amount for Non-VAT items
+                display_base = r_base + r_vat if "NON VAT" in r_cat else r_base
                 table_data.append({
                     "Description of Goods or Services": f"{r_name} ({r_cat})",
-                    "Amount Excluding VAT (Rs.)": f"{int(r_base):,}.00"
+                    "Amount Excluding VAT (Rs.)": f"{int(display_base):,}.00"
                 })
             st.table(table_data)
             
             st.markdown("---")
-            col_t1, col_t2 = st.columns(2)
-            with col_t1:
-                st.write("**Total Value of Supply:**")
-                st.write("**SSCL (2.5%):**")
-                st.write("**VAT Amount (18%):**")
-                st.subheader("**Total Amount including VAT:**")
-            with col_t2:
-                st.write(f"LKR {subtotal:,}.00")
-                st.write(f"LKR {total_sscl:,}.00")
-                st.write(f"LKR {total_vat:,}.00")
-                st.subheader(f"LKR {grand_final:,}.00")
+            
+            # Recalculate on-screen visualization metrics to balance math rules perfectly
+            if has_non_vat_item:
+                display_subtotal = subtotal + total_vat
+                display_vat = 0
+            else:
+                display_subtotal = subtotal
+                display_vat = total_vat
 
-        # VARIANT 2: RAW EXCEL DOWNLOAD
-        else:
-            export_raw_data = []
-            for row in rows:
-                r_id, r_cat, r_name, r_base, r_sscl, r_vat, r_tot = row
