@@ -68,7 +68,7 @@ for f in all_files:
 if top_banner_file:
     st.image(top_banner_file, use_container_width=True)
 
-st.title("🚢 SLPA - Port Charges - IMPORT ")
+st.title("🚢 SLPA - Port Charges - IMPORT 🚢")
 st.markdown("---")
 
 # --- TWO COLUMN APP FRAME WORK ---
@@ -231,10 +231,10 @@ with main_right:
                 st.write("**VAT Amount (18%):**")
                 st.subheader("**Total Amount including VAT:**")
             with col_t2:
-                st.write        (f"LKR {subtotal:,}.00")
-                st.write      (f"LKR {total_sscl:,}.00")
-                st.write       (f"LKR {total_vat:,}.00")
-                st.subheader (f"LKR {grand_final:,}.00")
+                st.write(f"LKR {subtotal:,}.00")
+                st.write(f"LKR {total_sscl:,}.00")
+                st.write(f"LKR {total_vat:,}.00")
+                st.subheader(f"LKR {grand_final:,}.00")
 
         # VARIANT 2: RAW EXCEL DOWNLOAD
         else:
