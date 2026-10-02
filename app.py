@@ -72,7 +72,7 @@ st.title("🚢 SLPA Customs Tax Invoice Generation Engine")
 st.markdown("---")
 
 # --- TWO COLUMN MAIN APP FRAME WORK ---
-main_left, main_right = st.columns([1, 3], gap="large")
+main_left, main_right = st.columns([1, 2], gap="large")
 
 with main_left:
     st.header("📋 Header Metadata")
@@ -189,7 +189,7 @@ with main_right:
         st.success("Calculated and added successfully!")
 
     # =====================================================================
-    #   PINNED UPPER RIGHT POSITION: Section 2 fills the empty right side space
+    #   SECTION 2: OUTPUT SELECTION CARD PANEL
     # =====================================================================
     st.markdown("---")
     st.header("2. Choose Output Format Options")
@@ -203,7 +203,7 @@ with main_right:
     totals_row = cursor.fetchone()
     conn.close()
 
-    # --- RELIABLE VALUE PARSER ENGINE ---
+    # Extraction with absolute fallback limits
     subtotal = int(totals_row[0]) if totals_row and totals_row[0] is not None else 0
     total_sscl = int(totals_row[1]) if totals_row and totals_row[1] is not None else 0
     total_vat = int(totals_row[2]) if totals_row and totals_row[2] is not None else 0
@@ -224,10 +224,9 @@ with main_right:
                 })
             st.table(table_data)
             
-            # --- CRASH-PROOF NATIVE STATS OVERVIEW CONTROLS ---
-            # Replaced plain string markup with crisp, bulletproof key-value pairs
+            st.markdown("---")
+            # --- CRASH-PROOF SINGLE TEXT STRINGS INJECTION ---
+            # Combines text and numeric values together side-by-side so they can never move apart
             st.markdown("### Summary Calculations")
-            col_lbl, col_val = st.columns(2)
-            with col_lbl:
-                st.write("**Total Value of Supply:**")
-                st.write("**SSCL (2.5%):**")
+            st.write(f"**Total Value of Supply:** Rs. {subtotal:,}.00")
+            st.write(f"**SSCL (2.5%):** Rs. {total_sscl:,}.00")
