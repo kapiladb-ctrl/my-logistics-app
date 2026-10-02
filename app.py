@@ -72,7 +72,7 @@ st.title("🚢 SLPA Customs Tax Invoice Generation Engine")
 st.markdown("---")
 
 # --- TWO COLUMN MAIN APP FRAME WORK ---
-main_left, main_right = st.columns([1, 3], gap="large")
+main_left, main_right = st.columns([1, 2], gap="large")
 
 with main_left:
     st.header("📋 Header Metadata")
@@ -176,8 +176,6 @@ with main_right:
         sscl_raw = (amount_lkr / 97.5) * 2.5
         sscl_tax = int(math.ceil(sscl_raw))
         
-        # --- FIXED CASCADING MATHEMATICAL BLOCK ---
-        # Calculates VAT based strictly on whether the flag is active
         if is_vat_visible:
             vat_base = amount_lkr + sscl_tax
             vat_column_value = int(math.ceil(vat_base * 0.18))
@@ -206,11 +204,11 @@ with main_right:
     cursor.execute("SELECT * FROM invoices")
     rows = cursor.fetchall()
     
-    # Calculate sums directly from the database columns
     cursor.execute("SELECT SUM(amount_lkr), SUM(sscl_tax), SUM(vat_tax), SUM(grand_total) FROM invoices")
     totals_row = cursor.fetchone()
     conn.close()
 
+    # Crash-proof extraction check: Assigns zero defaults if database returns None values
     subtotal = int(totals_row[0]) if totals_row and totals_row[0] is not None else 0
     total_sscl = int(totals_row[1]) if totals_row and totals_row[1] is not None else 0
     total_vat = int(totals_row[2]) if totals_row and totals_row[2] is not None else 0
@@ -232,7 +230,10 @@ with main_right:
             st.table(table_data)
             
             st.markdown("---")
-            # --- ALIGNED TEXT GRID LAYOUT MATCHING YOURMonitor PHOTO ---
             st.subheader("Summary Calculations")
             
-            r1_l, r1_r = st.columns([3, 1])
+            # --- CRASH-PROOF STACKED GRID COLUMNS ---
+            r1_l, r1_r = st.columns([2, 1])
+            with r1_l: st.write("**Total Value of Supply:**")
+            with r1_r: st.write(f"LKR {subtotal:,}.00")
+                
