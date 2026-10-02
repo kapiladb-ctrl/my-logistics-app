@@ -203,6 +203,7 @@ with main_right:
     totals_row = cursor.fetchone()
     conn.close()
 
+    # --- RELIABLE VALUE PARSER ENGINE ---
     subtotal = int(totals_row[0]) if totals_row and totals_row[0] is not None else 0
     total_sscl = int(totals_row[1]) if totals_row and totals_row[1] is not None else 0
     total_vat = int(totals_row[2]) if totals_row and totals_row[2] is not None else 0
@@ -224,13 +225,13 @@ with main_right:
             
             st.markdown("---")
             # --- SAFE NATIVE SIDE-BY-SIDE GRID DISPLAY SYSTEM ---
-            # Automatically forces fields and amounts to mirror your layout screenshot beautifully
             st.markdown("### Summary Calculations")
             
-            sum_col1, sum_col2 = st.columns([2, 1])
+            sum_col1, sum_col2 = st.columns([1, 1])
             with sum_col1:
                 st.write("**Total Value of Supply:**")
                 st.write("**SSCL (2.5%):**")
                 st.write("**VAT Amount (18%):**")
                 st.markdown("## **Total Amount including VAT:**")
             with sum_col2:
+                st.write(f"LKR {subtotal:,}.00")
