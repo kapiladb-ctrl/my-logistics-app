@@ -203,7 +203,7 @@ with main_right:
     totals_row = cursor.fetchone()
     conn.close()
 
-    # --- RELIABLE VALUE PARSER ENGINE ---
+    # --- CRASH-PROOF VALUE FALLBACKS ---
     subtotal = int(totals_row[0]) if totals_row and totals_row[0] is not None else 0
     total_sscl = int(totals_row[1]) if totals_row and totals_row[1] is not None else 0
     total_vat = int(totals_row[2]) if totals_row and totals_row[2] is not None else 0
@@ -225,11 +225,11 @@ with main_right:
             st.table(table_data)
             
             st.markdown("---")
+            # --- CUSTOM ALIGNED ROW RATIO DISPLAY ---
+            # Using fixed width columns [2, 5] to pull numbers close to titles exactly like your screenshot!
             st.subheader("Summary Calculations")
             
-            # --- FIXED-WIDTH COMPACT ROW DISPLAY PANEL ---
-            # Creates 4 clean, beautifully stacked text lines exactly like your target sample photo
-            r1_l, r1_r = st.columns([2, 1])
-            with r1_l: st.write("**Total Value of Supply:**")
-            with r1_r: st.write(f"LKR {subtotal:,}.00")
+            r1_lbl, r1_val = st.columns([2, 5])
+            with r1_lbl: st.write("**Total Value of Supply:**")
+            with r1_val: st.write(f"LKR {subtotal:,}.00")
                 
