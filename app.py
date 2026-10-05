@@ -6,8 +6,7 @@ from datetime import datetime
 import io
 import os
 
-# --- FRESH SYNCHRONIZED STORAGE TAG ---
-DB_NAME = "billing_system_v2.db"
+DB_NAME = "billing_system.db"
 
 # --- Database Initialization ---
 def init_database():
@@ -59,7 +58,6 @@ if not st.session_state["authenticated"]:
 all_files = os.listdir(".") if os.path.exists(".") else []
 top_banner_file = None
 left_strip_file = None
-
 for f in all_files:
     f_lower = f.lower()
     if "top" in f_lower and "banner" in f_lower and any(ext in f_lower for ext in [".jpg", ".jpeg", ".png"]):
@@ -69,7 +67,6 @@ for f in all_files:
 
 if top_banner_file:
     st.image(top_banner_file, use_container_width=True)  
-
 st.title("🚢 SLPA CHARGES - IMPORT FCL 🚢")
 st.markdown("---")
 
@@ -78,10 +75,10 @@ main_left, main_right = st.columns([1, 3], gap="large")
 
 with main_left:
     st.header("📋 Header Metadata")
-    serial_no = st.text_input("Serial No", value="29258")
-    purchaser_tin = st.text_input("Purchases TIN", value="103252347")
-    purchaser_name = st.text_input("Purchases Name", value="M/S. LANKA INTERNATIONAL PORT PVT LTD")
-    purchaser_addr = st.text_area("Address", value="NO. 1, LEVEL 6, VALTING TOWER\nNAVAM MAWATHA, COLOMBO 02")
+    serial_no = st.text_input("Serial No", value="xxxxx")
+    purchaser_tin = st.text_input("Purchases TIN", value="xxxxxxxxx")
+    purchaser_name = st.text_input("Purchases Name", value="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
+    purchaser_addr = st.text_area("Address", value="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
     
     st.markdown("---")
     dollar_rate = st.number_input("Global USD Exchange Rate", value=333.85, step=0.01)
@@ -89,6 +86,7 @@ with main_left:
     st.markdown("---")
     st.subheader("🛠️ Maintenance Controls")
     
+    # PERMANENTLY UNHIDDEN CLEAR BUTTON
     if st.button("🗑️ Clear Current Invoice Sheet", type="secondary", use_container_width=True):
         conn = sqlite3.connect(DB_NAME)
         cursor = conn.cursor()
@@ -133,6 +131,7 @@ with main_right:
             charge_rate = st.number_input("Unit Price USD", value=default_rate)
             items = st.number_input("Quantity", value=1, step=1)
             base_amount = charge_rate * items * dollar_rate
+
         elif "Wharf Rent" in category:
             charge_name = st.text_input("Description of Goods or Services", value="Wharf Handling Charge Block")
             total_basic_dates = st.number_input("Enter Total Basic Dates/Days", value=127, step=1)
@@ -141,6 +140,7 @@ with main_right:
             p1_gp = st.number_input("PNL 1 Factor", value=30.0)
             p2_gp = st.number_input("PNL 2 Factor", value=46.0)
             base_amount = 0.0
+
         elif "Administrative" in category:
             charge_name = st.text_input("Description of Goods or Services", value="Penalty Charge")
             total_amount_lkr = st.number_input("Total Amount (LKR Source)", value=00000.0)
@@ -150,6 +150,7 @@ with main_right:
             with col2: end_date = st.date_input("To Date", datetime(2026, 10, 3))
             days = abs(1+(end_date - start_date).days)
             base_amount = total_amount_lkr * factor * days
+
         submit_button = st.form_submit_button("⚡ Compute & Commit Line")
 
     if submit_button:
@@ -171,10 +172,10 @@ with main_right:
         calculated_vat = int(math.ceil(vat_base * 0.18))
         vat_column_value = calculated_vat if is_vat_visible else 0
         grand_total = amount_lkr + sscl_tax + calculated_vat
-        
+
         conn = sqlite3.connect(DB_NAME)
         cursor = conn.cursor()
-        cursor.execute("INSERT INTO invoices (id, category, charge_name, amount_lkr, sscl_tax, vat_tax, grand_total) VALUES (NULL, ?, ?, ?, ?, ?, ?)",
+        cursor.execute("INSERT INTO invoices (category, charge_name, amount_lkr, sscl_tax, vat_tax, grand_total) VALUES (?, ?, ?, ?, ?, ?)",
                        (category, charge_name, amount_lkr, sscl_tax, vat_column_value, grand_total))
         conn.commit()
         conn.close()
@@ -184,10 +185,10 @@ with main_right:
     st.markdown("---")
     st.header("2. Choose Output Format Options")
     output_choice = st.radio("Select Output Format Variant:", ["Visual Invoice Sheet (Form Look)", "Raw Excel Spreadsheet (.xlsx)"])
-    
+
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
-    cursor.execute("SELECT id, category, charge_name, amount_lkr, sscl_tax, vat_tax, grand_total FROM invoices")
+    cursor.execute("SELECT * FROM invoices")
     rows = cursor.fetchall()
     cursor.execute("SELECT SUM(amount_lkr), SUM(sscl_tax), SUM(vat_tax), SUM(grand_total) FROM invoices")
     totals_row = cursor.fetchone()
@@ -198,14 +199,12 @@ with main_right:
     total_sscl = 0
     total_vat = 0
     grand_final = 0
-    
-    if totals_row and totals_row is not None:
-        subtotal = int(totals_row[0]) if totals_row[0] is not None else 0
-        total_sscl = int(totals_row[1]) if totals_row[1] is not None else 0
-        total_vat = int(totals_row[2]) if totals_row[2] is not None else 0
-        grand_final = int(totals_row[3]) if totals_row[3] is not None else 0
 
-    has_non_vat_item = any("NON VAT" in r[1] for r in rows) if rows else False
+    if totals_row and totals_row[0] is not None:
+        subtotal = int(totals_row[0])
+        total_sscl = int(totals_row[1])
+        total_vat = int(totals_row[2])
+        grand_final = int(totals_row[3])
 
     if rows:
         # VARIANT 1: VISUAL NATIVE FORM LOOK
@@ -217,21 +216,27 @@ with main_right:
             table_data = []
             for row in rows:
                 r_id, r_cat, r_name, r_base, r_sscl, r_vat, r_tot = row
-                display_base = r_base + r_vat if "NON VAT" in r_cat else r_base
                 table_data.append({
                     "Description of Goods or Services": f"{r_name} ({r_cat})",
-                    "Amount Excluding VAT (Rs.)": f"{int(display_base):,}.00"
+                    "Amount Excluding VAT (Rs.)": f"{int(r_base):,}.00"
                 })
             st.table(table_data)
             
             st.markdown("---")
-            
-            if has_non_vat_item:
-                display_subtotal = subtotal + total_vat
-                display_vat = 0
-            else:
-                display_subtotal = subtotal
-                display_vat = total_vat
+            col_t1, col_t2 = st.columns(2)
+            with col_t1:
+                st.write("**Total Value of Supply:**")
+                st.write("**SSCL (2.5%):**")
+                st.write("**VAT Amount (18%):**")
+                st.subheader("**Total Amount including VAT:**")
+            with col_t2:
+                st.write(f"LKR {subtotal:,}.00")
+                st.write(f"LKR {total_sscl:,}.00")
+                st.write(f"LKR {total_vat:,}.00")
+                st.subheader(f"LKR {grand_final:,}.00")
 
-            lbl_col, val_col = st.columns(2)
-            with lbl_col:
+        # VARIANT 2: RAW EXCEL DOWNLOAD
+        else:
+            export_raw_data = []
+            for row in rows:
+                r_id, r_cat, r_name, r_base, r_sscl, r_vat, r_tot = row
