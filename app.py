@@ -55,6 +55,8 @@ if not st.session_state["authenticated"]:
 # =====================================================================
 #       BULLETPROOF FULL-PAGE BACKGROUND INJECTOR (RUNS AFTER LOGIN)
 # =====================================================================
+# This configuration uses a rock-solid online asset link that will NEVER cause an f-string TypeError crash!
+# The 0.95 white overlay acts as a frosted layer so you can read all your texts beautifully.
 st.markdown(
     """
     <style>
@@ -200,6 +202,7 @@ with main_right:
     st.markdown("---")
     st.header("2. Choose Output Format Options")
     output_choice = st.radio("Select Output Format Variant:", ["Visual Invoice Sheet (Form Look)", "Raw Excel Spreadsheet (.xlsx)"])
+    
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM invoices")
@@ -213,6 +216,7 @@ with main_right:
     total_sscl = 0
     total_vat = 0
     grand_final = 0
+    
     if totals_row and totals_row[0] is not None:
         subtotal = int(totals_row[0])
         total_sscl = int(totals_row[1])
@@ -233,9 +237,3 @@ with main_right:
                     "Description of Goods or Services": f"{r_name} ({r_cat})",
                     "Amount Excluding VAT (Rs.)": f"{int(r_base):,}.00"
                 })
-            st.table(table_data)
-            
-            st.markdown("---")
-            col_t1, col_t2 = st.columns(2)
-            with col_t1:
-                st.write("**Total Value of Supply:**")
