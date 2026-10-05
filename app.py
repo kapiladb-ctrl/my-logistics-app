@@ -68,7 +68,15 @@ for f in all_files:
 if top_banner_file:
      st.image(top_banner_file, use_container_width=True)  
 st.title("🚢 SLPA CHARGES - IMPORT FCL 🚢")
-st.markdown("---")
+st.markdown("f"""
+        <style>
+        .stApp {{
+            background: linear-gradient(rgba(255, 255, 255, 0.94), rgba(255, 255, 255, 0.94)), 
+                        url("https://githubusercontent.com");
+            background-size: cover;
+            background-position: center center;
+            background-attachment: fixed;")
+        }}
 
 # --- TWO COLUMN APP FRAME WORK ---
 main_left, main_right = st.columns([1, 3], gap="large")
