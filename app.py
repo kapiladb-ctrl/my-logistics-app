@@ -6,7 +6,7 @@ from datetime import datetime
 import io
 import os
 
-# --- FRESH SYNCHRONIZED STORAGE TAG (Clears old database conflict cache) ---
+# --- FRESH SYNCHRONIZED STORAGE TAG ---
 DB_NAME = "billing_system_v2.db"
 
 # --- Database Initialization ---
@@ -172,7 +172,6 @@ with main_right:
         vat_column_value = calculated_vat if is_vat_visible else 0
         grand_total = amount_lkr + sscl_tax + calculated_vat
         
-        # --- SAFE EXPLICIT DATABASE STORAGE LINE ---
         conn = sqlite3.connect(DB_NAME)
         cursor = conn.cursor()
         cursor.execute("INSERT INTO invoices (id, category, charge_name, amount_lkr, sscl_tax, vat_tax, grand_total) VALUES (NULL, ?, ?, ?, ?, ?, ?)",
@@ -218,7 +217,6 @@ with main_right:
             table_data = []
             for row in rows:
                 r_id, r_cat, r_name, r_base, r_sscl, r_vat, r_tot = row
-                # Show adjusted display amount for Non-VAT items
                 display_base = r_base + r_vat if "NON VAT" in r_cat else r_base
                 table_data.append({
                     "Description of Goods or Services": f"{r_name} ({r_cat})",
@@ -228,5 +226,12 @@ with main_right:
             
             st.markdown("---")
             
-            # Recalculate on-screen visualization metrics to balance math rules perfectly
             if has_non_vat_item:
+                display_subtotal = subtotal + total_vat
+                display_vat = 0
+            else:
+                display_subtotal = subtotal
+                display_vat = total_vat
+
+            lbl_col, val_col = st.columns(2)
+            with lbl_col:
