@@ -6,7 +6,8 @@ from datetime import datetime
 import io
 import os
 
-DB_NAME = "billing_system.db"
+# --- FRESH SYNCHRONIZED STORAGE TAG (Clears old database conflict cache) ---
+DB_NAME = "billing_system_v2.db"
 
 # --- Database Initialization ---
 def init_database():
@@ -171,7 +172,7 @@ with main_right:
         vat_column_value = calculated_vat if is_vat_visible else 0
         grand_total = amount_lkr + sscl_tax + calculated_vat
         
-        # --- FIXED EXPLICIT 7-COLUMN INNER DATABASE INJECTION MAPPING ---
+        # --- SAFE EXPLICIT DATABASE STORAGE LINE ---
         conn = sqlite3.connect(DB_NAME)
         cursor = conn.cursor()
         cursor.execute("INSERT INTO invoices (id, category, charge_name, amount_lkr, sscl_tax, vat_tax, grand_total) VALUES (NULL, ?, ?, ?, ?, ?, ?)",
@@ -199,11 +200,11 @@ with main_right:
     total_vat = 0
     grand_final = 0
     
-    if totals_row and totals_row[0] is not None:
-        subtotal = int(totals_row[0])
-        total_sscl = int(totals_row[1])
-        total_vat = int(totals_row[2])
-        grand_final = int(totals_row[3])
+    if totals_row and totals_row is not None:
+        subtotal = int(totals_row[0]) if totals_row[0] is not None else 0
+        total_sscl = int(totals_row[1]) if totals_row[1] is not None else 0
+        total_vat = int(totals_row[2]) if totals_row[2] is not None else 0
+        grand_final = int(totals_row[3]) if totals_row[3] is not None else 0
 
     has_non_vat_item = any("NON VAT" in r[1] for r in rows) if rows else False
 
@@ -217,7 +218,7 @@ with main_right:
             table_data = []
             for row in rows:
                 r_id, r_cat, r_name, r_base, r_sscl, r_vat, r_tot = row
-                # Adjusted display behavior for Non-VAT entries
+                # Show adjusted display amount for Non-VAT items
                 display_base = r_base + r_vat if "NON VAT" in r_cat else r_base
                 table_data.append({
                     "Description of Goods or Services": f"{r_name} ({r_cat})",
@@ -227,13 +228,5 @@ with main_right:
             
             st.markdown("---")
             
+            # Recalculate on-screen visualization metrics to balance math rules perfectly
             if has_non_vat_item:
-                display_subtotal = subtotal + total_vat
-                display_vat = 0
-            else:
-                display_subtotal = subtotal
-                display_vat = total_vat
-
-            lbl_col, val_col = st.columns(2)
-            with lbl_col:
-                st.write("**Total Value of Supply:**")
