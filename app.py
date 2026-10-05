@@ -53,26 +53,6 @@ if not st.session_state["authenticated"]:
     st.stop()
 
 # =====================================================================
-#       BULLETPROOF FULL-PAGE BACKGROUND INJECTOR (RUNS AFTER LOGIN)
-# =====================================================================
-# This configuration uses a rock-solid online asset link that will NEVER cause an f-string TypeError crash!
-# The 0.95 white overlay acts as a frosted layer so you can read all your texts beautifully.
-st.markdown(
-    """
-    <style>
-    .stApp {
-        background: linear-gradient(rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.95)), 
-                    url("https://unsplash.com");
-        background-size: cover;
-        background-position: center center;
-        background-attachment: fixed;
-    }
-    </style>
-    """,
-    unsafe_html=True
-)
-
-# =====================================================================
 #                         MAIN APPLICATION ENGINE
 # =====================================================================
 all_files = os.listdir(".") if os.path.exists(".") else []
@@ -205,7 +185,7 @@ with main_right:
     
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM invoices")
+    cursor.execute("SELECT id, category, charge_name, amount_lkr, sscl_tax, vat_tax, grand_total FROM invoices")
     rows = cursor.fetchall()
     cursor.execute("SELECT SUM(amount_lkr), SUM(sscl_tax), SUM(vat_tax), SUM(grand_total) FROM invoices")
     totals_row = cursor.fetchone()
@@ -217,11 +197,13 @@ with main_right:
     total_vat = 0
     grand_final = 0
     
-    if totals_row and totals_row[0] is not None:
-        subtotal = int(totals_row[0])
-        total_sscl = int(totals_row[1])
-        total_vat = int(totals_row[2])
-        grand_final = int(totals_row[3])
+    if totals_row and totals_row is not None:
+        subtotal = int(totals_row[0]) if totals_row[0] is not None else 0
+        total_sscl = int(totals_row[1]) if totals_row[1] is not None else 0
+        total_vat = int(totals_row[2]) if totals_row[2] is not None else 0
+        grand_final = int(totals_row[3]) if totals_row[3] is not None else 0
+
+    has_non_vat_item = any("NON VAT" in r[1] for r in rows) if rows else False
 
     if rows:
         # VARIANT 1: VISUAL NATIVE FORM LOOK
@@ -233,7 +215,19 @@ with main_right:
             table_data = []
             for row in rows:
                 r_id, r_cat, r_name, r_base, r_sscl, r_vat, r_tot = row
+                # Dynamic adjustment for Non-VAT items: value of supply includes its hidden calculation segment
+                display_base = r_base + r_vat if "NON VAT" in r_cat else r_base
                 table_data.append({
                     "Description of Goods or Services": f"{r_name} ({r_cat})",
-                    "Amount Excluding VAT (Rs.)": f"{int(r_base):,}.00"
+                    "Amount Excluding VAT (Rs.)": f"{int(display_base):,}.00"
                 })
+            st.table(table_data)
+            
+            st.markdown("---")
+            
+            # Recalculate on-screen visualization metrics
+            if has_non_vat_item:
+                display_subtotal = subtotal + total_vat
+                display_vat = 0
+            else:
+                display_subtotal = subtotal
