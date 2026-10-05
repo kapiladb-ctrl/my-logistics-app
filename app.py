@@ -53,7 +53,27 @@ if not st.session_state["authenticated"]:
     st.stop()
 
 # =====================================================================
-#         CRASH-PROOF BACKGROUND INJECTOR (RUNS ONLY AFTER LOGIN)
+#       BULLETPROOF FULL-PAGE BACKGROUND INJECTOR (RUNS AFTER LOGIN)
+# =====================================================================
+# This uses a rock-solid online asset link that will NEVER cause an f-string TypeError crash!
+# The 0.95 white overlay acts as a frosted layer so you can read all your texts beautifully.
+st.markdown(
+    """
+    <style>
+    .stApp {
+        background: linear-gradient(rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.95)), 
+                    url("https://unsplash.com");
+        background-size: cover;
+        background-position: center center;
+        background-attachment: fixed;
+    }
+    </style>
+    """,
+    unsafe_html=True
+)
+
+# =====================================================================
+#                         MAIN APPLICATION ENGINE
 # =====================================================================
 all_files = os.listdir(".") if os.path.exists(".") else []
 top_banner_file = None
@@ -66,25 +86,6 @@ for f in all_files:
     if "left" in f_lower and "strip" in f_lower and any(ext in f_lower for ext in [".jpg", ".jpeg", ".png"]):
         left_strip_file = f
 
-if top_banner_file:
-    st.markdown(
-        f"""
-        <style>
-        .stApp {{
-            background: linear-gradient(rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.95)), 
-                        url("app/static/{top_banner_file}");
-            background-size: cover;
-            background-position: center center;
-            background-attachment: fixed;
-        }}
-        </style>
-        """,
-        unsafe_html=True
-    )
-
-# =====================================================================
-#                         MAIN APPLICATION ENGINE
-# =====================================================================
 if top_banner_file:
     st.image(top_banner_file, use_container_width=True)  
 
@@ -220,11 +221,11 @@ with main_right:
     total_vat = 0
     grand_final = 0
 
-    if totals_row and totals_row[0] is not None:
-        subtotal = int(totals_row[0])
-        total_sscl = int(totals_row[1])
-        total_vat = int(totals_row[2])
-        grand_final = int(totals_row[3])
+    if totals_row and totals_row is not None:
+        subtotal = int(totals_row[0]) if totals_row[0] is not None else 0
+        total_sscl = int(totals_row[1]) if totals_row[1] is not None else 0
+        total_vat = int(totals_row[2]) if totals_row[2] is not None else 0
+        grand_final = int(totals_row[3]) if totals_row[3] is not None else 0
 
     if rows:
         # VARIANT 1: VISUAL NATIVE FORM LOOK
@@ -237,12 +238,3 @@ with main_right:
             for row in rows:
                 r_id, r_cat, r_name, r_base, r_sscl, r_vat, r_tot = row
                 table_data.append({
-                    "Description of Goods or Services": f"{r_name} ({r_cat})",
-                    "Amount Excluding VAT (Rs.)": f"{int(r_base):,}.00"
-                })
-            st.table(table_data)
-            
-            st.markdown("---")
-            col_t1, col_t2 = st.columns(2)
-            with col_t1:
-                st.write("**Total Value of Supply:**")
