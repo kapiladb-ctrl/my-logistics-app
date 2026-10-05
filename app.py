@@ -32,6 +32,37 @@ init_database()
 st.set_page_config(page_title="SLPA Tax Invoice Engine", layout="wide")
 
 # =====================================================================
+#             CRASH-PROOF FULL-PAGE BACKGROUND INJECTION ENGINE
+# =====================================================================
+# If your top banner file exists in the directory, we reuse it as a full-page background texture
+all_files = os.listdir(".") if os.path.exists(".") else []
+top_banner_file = None
+left_strip_file = None
+
+for f in all_files:
+    f_lower = f.lower()
+    if "top" in f_lower and "banner" in f_lower and any(ext in f_lower for ext in [".jpg", ".jpeg", ".png"]):
+        top_banner_file = f
+    if "left" in f_lower and "strip" in f_lower and any(ext in f_lower for ext in [".jpg", ".jpeg", ".png"]):
+        left_strip_file = f
+
+if top_banner_file:
+    st.markdown(
+        f"""
+        <style>
+        .stApp {{
+            background: linear-gradient(rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.95)), 
+                        url("app/static/{top_banner_file}");
+            background-size: cover;
+            background-position: center center;
+            background-attachment: fixed;
+        }}
+        </style>
+        """,
+        unsafe_html=True
+    )
+
+# =====================================================================
 #                         PASSWORD LOGIN SYSTEM
 # =====================================================================
 CORRECT_PASSWORD = "Logistics2026"
@@ -55,18 +86,9 @@ if not st.session_state["authenticated"]:
 # =====================================================================
 #                         MAIN APPLICATION ENGINE
 # =====================================================================
-all_files = os.listdir(".") if os.path.exists(".") else []
-top_banner_file = None
-left_strip_file = None
-for f in all_files:
-    f_lower = f.lower()
-    if "top" in f_lower and "banner" in f_lower and any(ext in f_lower for ext in [".jpg", ".jpeg", ".png"]):
-        top_banner_file = f
-    if "left" in f_lower and "strip" in f_lower and any(ext in f_lower for ext in [".jpg", ".jpeg", ".png"]):
-        left_strip_file = f
-
 if top_banner_file:
     st.image(top_banner_file, use_container_width=True)  
+
 st.title("🚢 SLPA CHARGES - IMPORT FCL 🚢")
 st.markdown("---")
 
@@ -222,21 +244,3 @@ with main_right:
                 })
             st.table(table_data)
             
-            st.markdown("---")
-            col_t1, col_t2 = st.columns(2)
-            with col_t1:
-                st.write("**Total Value of Supply:**")
-                st.write("**SSCL (2.5%):**")
-                st.write("**VAT Amount (18%):**")
-                st.subheader("**Total Amount including VAT:**")
-            with col_t2:
-                st.write(f"LKR {subtotal:,}.00")
-                st.write(f"LKR {total_sscl:,}.00")
-                st.write(f"LKR {total_vat:,}.00")
-                st.subheader(f"LKR {grand_final:,}.00")
-
-        # VARIANT 2: RAW EXCEL DOWNLOAD
-        else:
-            export_raw_data = []
-            for row in rows:
-                r_id, r_cat, r_name, r_base, r_sscl, r_vat, r_tot = row
