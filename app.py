@@ -55,8 +55,6 @@ if not st.session_state["authenticated"]:
 # =====================================================================
 #       BULLETPROOF FULL-PAGE BACKGROUND INJECTOR (RUNS AFTER LOGIN)
 # =====================================================================
-# This uses a rock-solid online asset link that will NEVER cause an f-string TypeError crash!
-# The 0.95 white overlay acts as a frosted layer so you can read all your texts beautifully.
 st.markdown(
     """
     <style>
@@ -152,7 +150,6 @@ with main_right:
             charge_rate = st.number_input("Unit Price USD", value=default_rate)
             items = st.number_input("Quantity", value=1, step=1)
             base_amount = charge_rate * items * dollar_rate
-
         elif "Wharf Rent" in category:
             charge_name = st.text_input("Description of Goods or Services", value="Wharf Handling Charge Block")
             total_basic_dates = st.number_input("Enter Total Basic Dates/Days", value=127, step=1)
@@ -161,7 +158,6 @@ with main_right:
             p1_gp = st.number_input("PNL 1 Factor", value=30.0)
             p2_gp = st.number_input("PNL 2 Factor", value=46.0)
             base_amount = 0.0
-
         elif "Administrative" in category:
             charge_name = st.text_input("Description of Goods or Services", value="Penalty Charge")
             total_amount_lkr = st.number_input("Total Amount (LKR Source)", value=00000.0)
@@ -171,7 +167,6 @@ with main_right:
             with col2: end_date = st.date_input("To Date", datetime(2026, 10, 3))
             days = abs(1+(end_date - start_date).days)
             base_amount = total_amount_lkr * factor * days
-
         submit_button = st.form_submit_button("⚡ Compute & Commit Line")
 
     if submit_button:
@@ -193,7 +188,6 @@ with main_right:
         calculated_vat = int(math.ceil(vat_base * 0.18))
         vat_column_value = calculated_vat if is_vat_visible else 0
         grand_total = amount_lkr + sscl_tax + calculated_vat
-
         conn = sqlite3.connect(DB_NAME)
         cursor = conn.cursor()
         cursor.execute("INSERT INTO invoices (category, charge_name, amount_lkr, sscl_tax, vat_tax, grand_total) VALUES (?, ?, ?, ?, ?, ?)",
@@ -206,7 +200,6 @@ with main_right:
     st.markdown("---")
     st.header("2. Choose Output Format Options")
     output_choice = st.radio("Select Output Format Variant:", ["Visual Invoice Sheet (Form Look)", "Raw Excel Spreadsheet (.xlsx)"])
-
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM invoices")
@@ -220,12 +213,11 @@ with main_right:
     total_sscl = 0
     total_vat = 0
     grand_final = 0
-
-    if totals_row and totals_row is not None:
-        subtotal = int(totals_row[0]) if totals_row[0] is not None else 0
-        total_sscl = int(totals_row[1]) if totals_row[1] is not None else 0
-        total_vat = int(totals_row[2]) if totals_row[2] is not None else 0
-        grand_final = int(totals_row[3]) if totals_row[3] is not None else 0
+    if totals_row and totals_row[0] is not None:
+        subtotal = int(totals_row[0])
+        total_sscl = int(totals_row[1])
+        total_vat = int(totals_row[2])
+        grand_final = int(totals_row[3])
 
     if rows:
         # VARIANT 1: VISUAL NATIVE FORM LOOK
@@ -238,3 +230,12 @@ with main_right:
             for row in rows:
                 r_id, r_cat, r_name, r_base, r_sscl, r_vat, r_tot = row
                 table_data.append({
+                    "Description of Goods or Services": f"{r_name} ({r_cat})",
+                    "Amount Excluding VAT (Rs.)": f"{int(r_base):,}.00"
+                })
+            st.table(table_data)
+            
+            st.markdown("---")
+            col_t1, col_t2 = st.columns(2)
+            with col_t1:
+                st.write("**Total Value of Supply:**")
