@@ -66,24 +66,7 @@ for f in all_files:
         left_strip_file = f
 
 if top_banner_file:
-     st.markdown(
-        f"""
-        <style>
-        .stApp {{
-            background: linear-gradient(rgba(255, 255, 255, 0.94), rgba(255, 255, 255, 0.94)), 
-                        url("https://githubusercontent.com");
-            background-size: cover;
-            background-position: center center;
-            background-attachment: fixed;
-        }}
-        </style>
-        """,
-        unsafe_html=True
-    )
-
-# --- TOP BANNER STRIP DISPLAY ---
-if top_banner_file:
-    st.markdown(f'<img src="app/static/{top_banner_file}" style="width: 100%; height: 120px; object-fit: cover; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.15);">', unsafe_html=True)
+    st.image(top_banner_file, use_container_width=True)  
 st.title("🚢 SLPA CHARGES - IMPORT FCL 🚢")
 st.markdown("---")
 
