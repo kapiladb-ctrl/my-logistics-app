@@ -66,7 +66,7 @@ for f in all_files:
         left_strip_file = f
 
 if top_banner_file:
-        st.image(top_banner_file, width=800)
+     st.image(top_banner_file, use_container_width=True)   
 st.title("🚢 SLPA CHARGES - IMPORT FCL 🚢")
 st.markdown("---")
 
