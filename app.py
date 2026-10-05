@@ -32,9 +32,29 @@ init_database()
 st.set_page_config(page_title="SLPA Tax Invoice Engine", layout="wide")
 
 # =====================================================================
-#             CRASH-PROOF FULL-PAGE BACKGROUND INJECTION ENGINE
+#                         PASSWORD LOGIN SYSTEM
 # =====================================================================
-# If your top banner file exists in the directory, we reuse it as a full-page background texture
+CORRECT_PASSWORD = "Logistics2026"
+
+if "authenticated" not in st.session_state:
+    st.session_state["authenticated"] = False
+
+if not st.session_state["authenticated"]:
+    st.markdown("## 🔒 System Security Gate")
+    st.info("Enter credentials below to access calculations.")
+    with st.form("login_form"):
+        user_password = st.text_input("Enter System Password", type="password")
+        if st.form_submit_button("🔓 Access System"):
+            if user_password == CORRECT_PASSWORD:
+                st.session_state["authenticated"] = True
+                st.rerun()
+            else:
+                st.error("Incorrect password.")
+    st.stop()
+
+# =====================================================================
+#         CRASH-PROOF BACKGROUND INJECTOR (RUNS ONLY AFTER LOGIN)
+# =====================================================================
 all_files = os.listdir(".") if os.path.exists(".") else []
 top_banner_file = None
 left_strip_file = None
@@ -63,27 +83,6 @@ if top_banner_file:
     )
 
 # =====================================================================
-#                         PASSWORD LOGIN SYSTEM
-# =====================================================================
-CORRECT_PASSWORD = "Logistics2026"
-
-if "authenticated" not in st.session_state:
-    st.session_state["authenticated"] = False
-
-if not st.session_state["authenticated"]:
-    st.markdown("## 🔒 System Security Gate")
-    st.info("Enter credentials below to access calculations.")
-    with st.form("login_form"):
-        user_password = st.text_input("Enter System Password", type="password")
-        if st.form_submit_button("🔓 Access System"):
-            if user_password == CORRECT_PASSWORD:
-                st.session_state["authenticated"] = True
-                st.rerun()
-            else:
-                st.error("Incorrect password.")
-    st.stop()
-
-# =====================================================================
 #                         MAIN APPLICATION ENGINE
 # =====================================================================
 if top_banner_file:
@@ -97,10 +96,10 @@ main_left, main_right = st.columns([1, 3], gap="large")
 
 with main_left:
     st.header("📋 Header Metadata")
-    serial_no = st.text_input("Serial No", value="xxxxx")
-    purchaser_tin = st.text_input("Purchases TIN", value="xxxxxxxxx")
-    purchaser_name = st.text_input("Purchases Name", value="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
-    purchaser_addr = st.text_area("Address", value="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
+    serial_no = st.text_input("Serial No", value="29258")
+    purchaser_tin = st.text_input("Purchases TIN", value="103252347")
+    purchaser_name = st.text_input("Purchases Name", value="M/S. LANKA INTERNATIONAL PORT PVT LTD")
+    purchaser_addr = st.text_area("Address", value="NO. 1, LEVEL 6, VALTING TOWER\nNAVAM MAWATHA, COLOMBO 02")
     
     st.markdown("---")
     dollar_rate = st.number_input("Global USD Exchange Rate", value=333.85, step=0.01)
@@ -108,7 +107,6 @@ with main_left:
     st.markdown("---")
     st.subheader("🛠️ Maintenance Controls")
     
-    # PERMANENTLY UNHIDDEN CLEAR BUTTON
     if st.button("🗑️ Clear Current Invoice Sheet", type="secondary", use_container_width=True):
         conn = sqlite3.connect(DB_NAME)
         cursor = conn.cursor()
@@ -244,3 +242,7 @@ with main_right:
                 })
             st.table(table_data)
             
+            st.markdown("---")
+            col_t1, col_t2 = st.columns(2)
+            with col_t1:
+                st.write("**Total Value of Supply:**")
