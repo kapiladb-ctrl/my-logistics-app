@@ -6,8 +6,7 @@ from datetime import datetime, date, timedelta
 import io
 import os
 
-# --- FRESH SYNCHRONIZED STORAGE TAG ---
-DB_NAME = "billing_system_v2.db"
+DB_NAME = "billing_system.db"
 
 # --- Database Initialization ---
 def init_database():
@@ -195,7 +194,7 @@ with main_right:
     totals_row = cursor.fetchone()
     conn.close()
 
-    # --- FIXED EXPLICIT ARRAY INDEX EXTRACTOR ---
+    # --- EXACT POSITION INDEX MAPPINGS FIXED ---
     subtotal = 0
     total_sscl = 0
     total_vat = 0
@@ -238,4 +237,6 @@ with main_right:
             display_subtotal = subtotal
             display_vat = total_vat
 
-        # --- EXPLICIT TWO-COLUMN SPACING INITIALIZATION ---
+        # --- DUAL SPACING METRIC GRID PANELS ---
+        col_t1, col_t2 = st.columns(2)
+        with col_t1:
