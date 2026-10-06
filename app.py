@@ -6,7 +6,7 @@ from datetime import datetime, date, timedelta
 import io
 import os
 
-# --- STORAGE DATABASE KEY ---
+# --- FRESH SYNCHRONIZED STORAGE TAG ---
 DB_NAME = "billing_system_v2.db"
 
 # --- Database Initialization ---
@@ -187,23 +187,27 @@ with main_right:
     st.header("2. Choose Output Format Options")
     output_choice = st.radio("Select Output Format Variant:", ["Visual Invoice Sheet (Form Look)", "Raw Excel Spreadsheet (.xlsx)"])
 
+    # --- BULLETPROOF RAW POSITION DATA PARSER ---
     conn = sqlite3.connect(DB_NAME)
-    conn.row_factory = sqlite3.Row  
     cursor = conn.cursor()
-    
     cursor.execute("SELECT id, category, charge_name, amount_lkr, sscl_tax, vat_tax, grand_total FROM invoices")
     rows = cursor.fetchall()
-    
-    cursor.execute("SELECT SUM(amount_lkr) as total_base, SUM(sscl_tax) as total_sscl, SUM(vat_tax) as total_vat, SUM(grand_total) as total_grand FROM invoices")
+    cursor.execute("SELECT SUM(amount_lkr), SUM(sscl_tax), SUM(vat_tax), SUM(grand_total) FROM invoices")
     totals_row = cursor.fetchone()
     conn.close()
 
-    subtotal = int(totals_row["total_base"]) if totals_row and totals_row["total_base"] is not None else 0
-    total_sscl = int(totals_row["total_sscl"]) if totals_row and totals_row["total_sscl"] is not None else 0
-    total_vat = int(totals_row["total_vat"]) if totals_row and totals_row["total_vat"] is not None else 0
-    grand_final = int(totals_row["total_grand"]) if totals_row and totals_row["total_grand"] is not None else 0
+    subtotal = 0
+    total_sscl = 0
+    total_vat = 0
+    grand_final = 0
 
-    has_non_vat_item = any("NON VAT" in r["category"] for r in rows) if rows else False
+    if totals_row and totals_row[0] is not None:
+        subtotal = int(totals_row[0])
+        total_sscl = int(totals_row[1])
+        total_vat = int(totals_row[2])
+        grand_final = int(totals_row[3])
+
+    has_non_vat_item = any("NON VAT" in r[1] for r in rows) if rows else False
 
     # VARIANT 1: VISUAL NATIVE FORM LOOK
     if output_choice == "Visual Invoice Sheet (Form Look)":
@@ -214,9 +218,10 @@ with main_right:
         table_data = []
         if rows:
             for row in rows:
-                display_base = row["amount_lkr"] + (int(math.ceil((row["amount_lkr"] + row["sscl_tax"]) * 0.18))) if "NON VAT" in row["category"] else row["amount_lkr"]
+                r_id, r_cat, r_name, r_base, r_sscl, r_vat, r_tot = row
+                display_base = r_base + (int(math.ceil((r_base + r_sscl) * 0.18))) if "NON VAT" in r_cat else r_base
                 table_data.append({
-                    "Description of Goods or Services": f"{row['charge_name']} ({row['category']})",
+                    "Description of Goods or Services": f"{r_name} ({r_cat})",
                     "Amount Excluding VAT (Rs.)": f"{int(display_base):,}.00"
                 })
             st.table(table_data)
@@ -226,4 +231,11 @@ with main_right:
         st.markdown("---")
         st.subheader("Summary Calculations")
         
-        # --- FIXED SPACING INDENT LEVEL (Strictly 4-spaces uniformly applied) ---
+        # --- MATHEMATICAL BALANCING ENGINE ---
+        if has_non_vat_item:
+            display_subtotal = grand_final - total_sscl
+            display_vat = 0
+        else:
+            display_subtotal = subtotal
+            display_vat = total_vat
+
