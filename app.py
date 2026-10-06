@@ -71,7 +71,7 @@ if top_banner_file:
 st.title("🚢 SLPA CHARGES - IMPORT FCL 🚢")
 st.markdown("---")
 
-# --- TWO COLUMN APP FRAME WORK ---
+# --- TWO COLUMN APP FRAME WORK (FIXED COLUMNS DEFINITION PARAMETERS) ---
 main_left, main_right = st.columns([1, 3], gap="large")
 
 with main_left:
@@ -226,4 +226,4 @@ with main_right:
         st.markdown("---")
         st.subheader("Summary Calculations")
         
-        # --- BALANCED FIXED INDENT MATHEMATICAL ENGINE ---
+        if has_non_vat_item:
