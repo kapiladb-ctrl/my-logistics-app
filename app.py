@@ -6,7 +6,8 @@ from datetime import datetime, date, timedelta
 import io
 import os
 
-DB_NAME = "billing_system.db"
+# --- FRESH SYNCHRONIZED STORAGE TAG ---
+DB_NAME = "billing_system_v2.db"
 
 # --- Database Initialization ---
 def init_database():
@@ -200,11 +201,11 @@ with main_right:
     total_vat = 0
     grand_final = 0
 
-    if totals_row and totals_row[0] is not None:
-        subtotal = int(totals_row[0])
-        total_sscl = int(totals_row[1])
-        total_vat = int(totals_row[2])
-        grand_final = int(totals_row[3])
+    if totals_row and totals_row is not None:
+        subtotal = int(totals_row[0]) if totals_row[0] is not None else 0
+        total_sscl = int(totals_row[1]) if totals_row[1] is not None else 0
+        total_vat = int(totals_row[2]) if totals_row[2] is not None else 0
+        grand_final = int(totals_row[3]) if totals_row[3] is not None else 0
 
     has_non_vat_item = any("NON VAT" in r[1] for r in rows) if rows else False
 
@@ -234,9 +235,3 @@ with main_right:
             display_subtotal = grand_final - total_sscl
             display_vat = 0
         else:
-            display_subtotal = subtotal
-            display_vat = total_vat
-
-        # --- DUAL SPACING METRIC GRID PANELS ---
-        col_t1, col_t2 = st.columns(2)
-        with col_t1:
