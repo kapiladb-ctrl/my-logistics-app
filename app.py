@@ -235,5 +235,4 @@ with main_right:
                 display_subtotal = subtotal
                 display_vat = total_vat
 
-            col_t1, col_t2 = st.columns(2)
-            with col_t1:
+            # Fixed parameters specified inside column ratios perfectly
