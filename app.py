@@ -2,7 +2,7 @@ import streamlit as st
 import sqlite3
 import math
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, date, timedelta
 import io
 import os
 
@@ -35,6 +35,7 @@ st.set_page_config(page_title="SLPA Tax Invoice Engine", layout="wide")
 #                         PASSWORD LOGIN SYSTEM
 # =====================================================================
 CORRECT_PASSWORD = "Logistics2026"
+
 if "authenticated" not in st.session_state:
     st.session_state["authenticated"] = False
 
@@ -65,20 +66,20 @@ for f in all_files:
         left_strip_file = f
 
 if top_banner_file:
-    st.image(top_banner_file, use_container_width=True)  
+    st.image(top_banner_file, use_container_width=True)
 
-st.title("🚢 SLPA CHARGES - IMPORT FCL 🚢")
+st.title("🚢 SLPA Customs Tax Invoice Generation Engine")
 st.markdown("---")
 
-# --- TWO COLUMN APP FRAME WORK ---
+# --- TWO COLUMN MAIN APP FRAME WORK ---
 main_left, main_right = st.columns([1, 3], gap="large")
 
 with main_left:
     st.header("📋 Header Metadata")
-    serial_no = st.text_input("Serial No", value="xxxxx")
-    purchaser_tin = st.text_input("Purchases TIN", value="xxxxxxxxx")
+    serial_no = st.text_input("Serial No", value="29258")
+    purchaser_tin = st.text_input("Purchases TIN", value="103252347")
     purchaser_name = st.text_input("Purchases Name", value="M/S. LANKA INTERNATIONAL PORT PVT LTD")
-    purchaser_addr = st.text_area("Address", value="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
+    purchaser_addr = st.text_area("Address", value="NO. 1, LEVEL 6, VALTING TOWER\nNAVAM MAWATHA, COLOMBO 02")
     
     st.markdown("---")
     dollar_rate = st.number_input("Global USD Exchange Rate", value=333.85, step=0.01)
@@ -86,6 +87,7 @@ with main_left:
     st.markdown("---")
     st.subheader("🛠️ Maintenance Controls")
     
+    # PERMANENTLY UNHIDDEN MAINTENANCE UTILITIES
     if st.button("🗑️ Clear Current Invoice Sheet", type="secondary", use_container_width=True):
         conn = sqlite3.connect(DB_NAME)
         cursor = conn.cursor()
@@ -105,7 +107,7 @@ with main_left:
 
 with main_right:
     st.header("1. Input Invoice Details")
-    category = st.selectbox("Select Item Category Type", [
+    category = st.selectbox("Select Billing Category Type", [
         "Amendment Charge (NON VAT)", 
         "Amendment Charge (VAT)",
         "DC PENALTY Charge",
@@ -142,11 +144,11 @@ with main_right:
 
         elif "Administrative" in category:
             charge_name = st.text_input("Description of Goods or Services", value="Penalty Charge")
-            total_amount_lkr = st.number_input("Total Amount (LKR Source)", value=00000.0)
+            total_amount_lkr = st.number_input("Total Amount (LKR Source)", value=12879.0)
             factor = st.number_input("Rate Factor (e.g., 1%)", value=0.01, format="%.2f")
             col1, col2 = st.columns(2)
-            with col1: start_date = st.date_input("From Date", datetime(2026, 9, 3))
-            with col2: end_date = st.date_input("To Date", datetime(2026, 10, 3))
+            with col1: start_date = st.date_input("From Date", datetime(2026, 9, 2))
+            with col2: end_date = st.date_input("To Date", datetime(2026, 10, 2))
             days = abs(1+(end_date - start_date).days)
             base_amount = total_amount_lkr * factor * days
 
@@ -167,7 +169,6 @@ with main_right:
             
         sscl_raw = (amount_lkr / 97.5) * 2.5
         sscl_tax = int(math.ceil(sscl_raw))
-        
         vat_base = amount_lkr + sscl_tax
         calculated_vat = int(math.ceil(vat_base * 0.18))
         vat_column_value = calculated_vat if is_vat_visible else 0
@@ -200,12 +201,13 @@ with main_right:
     total_vat = 0
     grand_final = 0
 
-    if totals_row and totals_row is not None:
-        subtotal = int(totals_row[0]) if totals_row[0] is not None else 0
-        total_sscl = int(totals_row[1]) if totals_row[1] is not None else 0
-        total_vat = int(totals_row[2]) if totals_row[2] is not None else 0
-        grand_final = int(totals_row[3]) if totals_row[3] is not None else 0
+    if totals_row and totals_row[0] is not None:
+        subtotal = int(totals_row[0])
+        total_sscl = int(totals_row[1])
+        total_vat = int(totals_row[2])
+        grand_final = int(totals_row[3])
 
+    # Dynamic adjustment parameters based on user rules
     has_non_vat_item = any("NON VAT" in r[1] for r in rows) if rows else False
 
     if rows:
@@ -218,7 +220,8 @@ with main_right:
             table_data = []
             for row in rows:
                 r_id, r_cat, r_name, r_base, r_sscl, r_vat, r_tot = row
-                display_base = r_base + (int(math.ceil((r_base + r_sscl) * 0.18))) if "NON VAT" in r_cat else r_base
+                # Show adjusted display amount for Non-VAT items
+                display_base = r_base + r_vat if "NON VAT" in r_cat else r_base
                 table_data.append({
                     "Description of Goods or Services": f"{r_name} ({r_cat})",
                     "Amount Excluding VAT (Rs.)": f"{int(display_base):,}.00"
@@ -226,8 +229,8 @@ with main_right:
             st.table(table_data)
             
             st.markdown("---")
-            st.subheader("Summary Calculations")
             
+            # Recalculate on-screen visualization metrics to balance math rules perfectly
             if has_non_vat_item:
                 display_subtotal = subtotal + total_vat
                 display_vat = 0
@@ -235,4 +238,3 @@ with main_right:
                 display_subtotal = subtotal
                 display_vat = total_vat
 
-            # Fixed parameters specified inside column ratios perfectly
