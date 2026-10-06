@@ -72,7 +72,7 @@ st.title("🚢 SLPA CHARGES - IMPORT FCL 🚢")
 st.markdown("---")
 
 # --- TWO COLUMN APP FRAME WORK ---
-main_left, main_right = st.columns([1, 3], gap="large")
+main_left, main_right = st.columns(2, gap="large")
 
 with main_left:
     st.header("📋 Header Metadata")
@@ -190,24 +190,25 @@ with main_right:
     cursor = conn.cursor()
     cursor.execute("SELECT id, category, charge_name, amount_lkr, sscl_tax, vat_tax, grand_total FROM invoices")
     rows = cursor.fetchall()
-    cursor.execute("SELECT SUM(amount_lkr), SUM(sscl_tax), SUM(vat_tax), SUM(grand_total) FROM invoices")
-    totals_row = cursor.fetchone()
     conn.close()
 
+    # --- RE-ENGINEERED COMPREHENSIVE MATH PARSER ---
     subtotal = 0
     total_sscl = 0
     total_vat = 0
     grand_final = 0
+    has_non_vat_item = False
 
-    if totals_row and totals_row is not None:
-        subtotal = int(totals_row[0]) if totals_row[0] is not None else 0
-        total_sscl = int(totals_row[1]) if totals_row[1] is not None else 0
-        total_vat = int(totals_row[2]) if totals_row[2] is not None else 0
-        grand_final = int(totals_row[3]) if totals_row[3] is not None else 0
+    for r in rows:
+        r_id, r_cat, r_name, r_base, r_sscl, r_vat, r_tot = r
+        subtotal += r_base
+        total_sscl += r_sscl
+        total_vat += r_vat
+        grand_final += r_tot
+        if "NON VAT" in r_cat:
+            has_non_vat_item = True
 
-    has_non_vat_item = any("NON VAT" in r[1] for r in rows) if rows else False
-
-    # --- PART A: ALWAYS VISIBLE FORM PREVIEW SHEET ---
+    # --- PART A: VISUAL INVOICE SHEET ---
     st.info(f"📄 **TAX INVOICE** | Serial No: {serial_no} | Purchases TIN: {purchaser_tin}")
     st.write(f"**Customer Name:** {purchaser_name}")
     st.write(f"**Billing Address:** {purchaser_addr}")
@@ -228,6 +229,7 @@ with main_right:
     st.markdown("---")
     st.subheader("Summary Calculations")
     
+    # Reroute calculations if it's a NON-VAT item
     if has_non_vat_item:
         display_subtotal = grand_final - total_sscl
         display_vat = 0
@@ -235,6 +237,7 @@ with main_right:
         display_subtotal = subtotal
         display_vat = total_vat
 
+    # --- FIXED LAYOUT ENGINE (GUARANTEES SIDE-BY-SIDE DISPLAY) ---
     col_t1, col_t2 = st.columns(2)
     with col_t1:
         st.write("**Total Value of Supply:**")
@@ -243,3 +246,6 @@ with main_right:
         st.markdown("## **Total Amount including VAT:**")
     with col_t2:
         st.write(f"LKR {display_subtotal:,}.00")
+        st.write(f"LKR {total_sscl:,}.00")
+        st.write(f"LKR {display_vat:,}.00")
+        st.markdown(f"## **LKR {grand_final:,}.00**")
