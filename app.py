@@ -77,9 +77,9 @@ main_left, main_right = st.columns([1, 3], gap="large")
 with main_left:
     st.header("📋 Header Metadata")
     serial_no = st.text_input("Serial No", value="29258")
-    purchaser_tin = st.text_input("Purchases TIN", value="103252347")
-    purchaser_name = st.text_input("Purchases Name", value="M/S. LANKA INTERNATIONAL PORT PVT LTD")
-    purchaser_addr = st.text_area("Address", value="NO. 1, LEVEL 6, VALTING TOWER\nNAVAM MAWATHA, COLOMBO 02")
+    purchaser_tin = st.text_input("Purchases TIN", value="XXXXXXXXX")
+    purchaser_name = st.text_input("Purchases Name", value="XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
+    purchaser_addr = st.text_area("Address", value="XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
     
     st.markdown("---")
     dollar_rate = st.number_input("Global USD Exchange Rate", value=333.85, step=0.01)
