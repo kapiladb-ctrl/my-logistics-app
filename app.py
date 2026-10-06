@@ -6,7 +6,7 @@ from datetime import datetime, date, timedelta
 import io
 import os
 
-# --- FRESH SYNCHRONIZED STORAGE TAG ---
+# --- STORAGE DATABASE KEY ---
 DB_NAME = "billing_system_v2.db"
 
 # --- Database Initialization ---
