@@ -71,7 +71,7 @@ if top_banner_file:
 st.title("🚢 SLPA CHARGES - IMPORT FCL 🚢")
 st.markdown("---")
 
-# --- FIXED GRID COLUMNS SPLIT RATIO (This fixes the blank rendering screen bug) ---
+# --- TWO COLUMN APP FRAME WORK ---
 main_left, main_right = st.columns([1, 3], gap="large")
 
 with main_left:
@@ -226,3 +226,4 @@ with main_right:
         st.markdown("---")
         st.subheader("Summary Calculations")
         
+        if has_non_vat_item:
