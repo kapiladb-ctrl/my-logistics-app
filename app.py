@@ -76,7 +76,7 @@ main_left, main_right = st.columns([1, 3], gap="large")
 
 with main_left:
     st.header("📋 Header Metadata")
-    serial_no = st.text_input("Serial No", value="29258")
+    serial_no = st.text_input("Serial No", value="XXXXX")
     purchaser_tin = st.text_input("Purchases TIN", value="XXXXXXXXX")
     purchaser_name = st.text_input("Purchases Name", value="XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
     purchaser_addr = st.text_area("Address", value="XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
