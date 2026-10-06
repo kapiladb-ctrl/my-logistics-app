@@ -71,7 +71,7 @@ if top_banner_file:
 st.title("🚢 SLPA CHARGES - IMPORT FCL 🚢")
 st.markdown("---")
 
-# --- FIXED GRID COLUMNS SPLIT RATIO (This fixes the missing display bug!) ---
+# --- FIXED GRID COLUMNS SPLIT RATIO (This fixes the blank rendering screen bug) ---
 main_left, main_right = st.columns([1, 3], gap="large")
 
 with main_left:
@@ -187,7 +187,6 @@ with main_right:
     st.header("2. Choose Output Format Options")
     output_choice = st.radio("Select Output Format Variant:", ["Visual Invoice Sheet (Form Look)", "Raw Excel Spreadsheet (.xlsx)"])
 
-    # Safe SQL row dictionary factory tracking
     conn = sqlite3.connect(DB_NAME)
     conn.row_factory = sqlite3.Row  
     cursor = conn.cursor()
@@ -225,3 +224,5 @@ with main_right:
             st.info("The invoice sheet table is currently empty. Input details to populate rows.")
         
         st.markdown("---")
+        st.subheader("Summary Calculations")
+        
