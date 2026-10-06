@@ -71,7 +71,7 @@ if top_banner_file:
 st.title("🚢 SLPA CHARGES - IMPORT FCL 🚢")
 st.markdown("---")
 
-# --- SAFE LAYOUT INITIALIZATION (NO BRACKETS TO PREVENT AUTO-STRIPPING) ---
+# --- TWO COLUMN APP FRAME WORK ---
 main_left, main_right = st.columns(2, gap="large")
 
 with main_left:
@@ -226,4 +226,4 @@ with main_right:
         st.markdown("---")
         st.subheader("Summary Calculations")
         
-        if has_non_vat_item:
+        # --- FIXED SPACING INDENT LEVEL (Strictly 4-spaces uniformly applied) ---
