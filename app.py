@@ -168,7 +168,7 @@ with main_right:
         sscl_raw = (amount_lkr / 97.5) * 2.5
         sscl_tax = int(math.ceil(sscl_raw))
         
-        # Calculate full VAT regardless of category to allow for display re-routing
+        # Calculate full VAT parameters regardless of flag setting for flexible re-routing display
         vat_base = amount_lkr + sscl_tax
         calculated_vat = int(math.ceil(vat_base * 0.18))
         vat_column_value = calculated_vat if is_vat_visible else 0
@@ -220,7 +220,7 @@ with main_right:
             table_data = []
             for row in rows:
                 r_id, r_cat, r_name, r_base, r_sscl, r_vat, r_tot = row
-                # Re-route line item table display mapping according to category choice
+                # Re-route item line display: combine supply amount and vat value if flagged
                 display_base = r_base + (int(math.ceil((r_base + r_sscl) * 0.18))) if "NON VAT" in r_cat else r_base
                 table_data.append({
                     "Description of Goods or Services": f"{r_name} ({r_cat})",
@@ -229,10 +229,10 @@ with main_right:
             st.table(table_data)
             
             st.markdown("---")
+            st.subheader("Summary Calculations")
             
-            # Dynamically balance summary metrics for clean cross-row mathematical addition
+            # Dynamically balance display parameters for perfect matching addition rules
             if has_non_vat_item:
                 display_subtotal = subtotal + total_vat
                 display_vat = 0
             else:
-                display_subtotal = subtotal
