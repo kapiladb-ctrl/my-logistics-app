@@ -72,7 +72,7 @@ st.title("🚢 SLPA CHARGES - IMPORT FCL 🚢")
 st.markdown("---")
 
 # --- TWO COLUMN APP FRAME WORK ---
-main_left, main_right = st.columns(2, gap="large")
+main_left, main_right = st.columns(0, gap="large")
 
 with main_left:
     st.header("📋 Header Metadata")
