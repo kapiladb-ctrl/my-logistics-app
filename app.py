@@ -226,5 +226,4 @@ with main_right:
         st.markdown("---")
         st.subheader("Summary Calculations")
         
-        # --- BALANCED TAX OVERRIDE ENGINE ---
-        if has_non_vat_item:
+        # --- BALANCED FIXED INDENT MATHEMATICAL ENGINE ---
