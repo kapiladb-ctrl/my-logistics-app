@@ -6,7 +6,7 @@ from datetime import datetime, date, timedelta
 import io
 import os
 
-# --- STORAGE DATABASE KEY ---
+# --- FRESH SYNCHRONIZED STORAGE TAG ---
 DB_NAME = "billing_system_v2.db"
 
 # --- Database Initialization ---
@@ -71,7 +71,7 @@ if top_banner_file:
 st.title("🚢 SLPA CHARGES - IMPORT FCL 🚢")
 st.markdown("---")
 
-# --- TWO COLUMN APP FRAME WORK ---
+# --- FIXED GRID COLUMNS SPLIT RATIO (This fixes the missing display bug!) ---
 main_left, main_right = st.columns([1, 3], gap="large")
 
 with main_left:
@@ -187,7 +187,7 @@ with main_right:
     st.header("2. Choose Output Format Options")
     output_choice = st.radio("Select Output Format Variant:", ["Visual Invoice Sheet (Form Look)", "Raw Excel Spreadsheet (.xlsx)"])
 
-    # Extract dynamic column values accurately using safe key dictionary titles
+    # Safe SQL row dictionary factory tracking
     conn = sqlite3.connect(DB_NAME)
     conn.row_factory = sqlite3.Row  
     cursor = conn.cursor()
@@ -225,5 +225,3 @@ with main_right:
             st.info("The invoice sheet table is currently empty. Input details to populate rows.")
         
         st.markdown("---")
-        st.subheader("Summary Calculations")
-        
