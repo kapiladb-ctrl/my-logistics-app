@@ -6,7 +6,7 @@ from datetime import datetime, date, timedelta
 import io
 import os
 
-DB_NAME = "billing_system.db"
+DB_NAME = "billing_system_v2.db"
 
 # --- Database Initialization ---
 def init_database():
@@ -168,7 +168,6 @@ with main_right:
         sscl_raw = (amount_lkr / 97.5) * 2.5
         sscl_tax = int(math.ceil(sscl_raw))
         
-        # Calculate full 18% VAT amount
         vat_base = amount_lkr + sscl_tax
         calculated_vat = int(math.ceil(vat_base * 0.18))
         vat_column_value = calculated_vat if is_vat_visible else 0
@@ -189,52 +188,52 @@ with main_right:
 
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM invoices")
+    cursor.execute("SELECT id, category, charge_name, amount_lkr, sscl_tax, vat_tax, grand_total FROM invoices")
     rows = cursor.fetchall()
-    
-    # Extract structural totals from SQLite database
     cursor.execute("SELECT SUM(amount_lkr), SUM(sscl_tax), SUM(vat_tax), SUM(grand_total) FROM invoices")
     totals_row = cursor.fetchone()
     conn.close()
 
+    # Safe Extraction Defaults
     subtotal = 0
     total_sscl = 0
     total_vat = 0
     grand_final = 0
 
-    if totals_row and totals_row[0] is not None:
-        subtotal = int(totals_row[0])
-        total_sscl = int(totals_row[1])
-        total_vat = int(totals_row[2])
-        grand_final = int(totals_row[3])
+    if totals_row and totals_row is not None:
+        subtotal = int(totals_row[0]) if totals_row[0] is not None else 0
+        total_sscl = int(totals_row[1]) if totals_row[1] is not None else 0
+        total_vat = int(totals_row[2]) if totals_row[2] is not None else 0
+        grand_final = int(totals_row[3]) if totals_row[3] is not None else 0
 
-    # Flag check: loops to see if a hidden or explicit NON-VAT row condition exists
     has_non_vat_item = any("NON VAT" in r[1] for r in rows) if rows else False
 
-    if rows:
-        # VARIANT 1: VISUAL NATIVE FORM LOOK
-        if output_choice == "Visual Invoice Sheet (Form Look)":
-            st.info(f"📄 **TAX INVOICE** | Serial No: {serial_no} | Purchases TIN: {purchaser_tin}")
-            st.write(f"**Customer Name:** {purchaser_name}")
-            st.write(f"**Billing Address:** {purchaser_addr}")
-            
-            table_data = []
+    # VARIANT 1: VISUAL NATIVE FORM LOOK
+    if output_choice == "Visual Invoice Sheet (Form Look)":
+        st.info(f"📄 **TAX INVOICE** | Serial No: {serial_no} | Purchases TIN: {purchaser_tin}")
+        st.write(f"**Customer Name:** {purchaser_name}")
+        st.write(f"**Billing Address:** {purchaser_addr}")
+        
+        table_data = []
+        if rows:
             for row in rows:
                 r_id, r_cat, r_name, r_base, r_sscl, r_vat, r_tot = row
-                
-                # Re-route: add the hidden generated 18% VAT directly to Value of Supply item rows
-                if "NON VAT" in r_cat:
-                    hidden_vat_line = int(math.ceil((r_base + r_sscl) * 0.18))
-                    display_base = r_base + hidden_vat_line
-                else:
-                    display_base = r_base
-                    
+                display_base = r_base + (int(math.ceil((r_base + r_sscl) * 0.18))) if "NON VAT" in r_cat else r_base
                 table_data.append({
                     "Description of Goods or Services": f"{r_name} ({r_cat})",
                     "Amount Excluding VAT (Rs.)": f"{int(display_base):,}.00"
                 })
             st.table(table_data)
-            
-            st.markdown("---")
-            st.subheader("Summary Calculations")
-            
+        else:
+            st.info("The invoice sheet table is currently empty. Input details to populate rows.")
+        
+        st.markdown("---")
+        st.subheader("Summary Calculations")
+        
+        if has_non_vat_item:
+            display_subtotal = grand_final - total_sscl
+            display_vat = 0
+        else:
+            display_subtotal = subtotal
+            display_vat = total_vat
+
