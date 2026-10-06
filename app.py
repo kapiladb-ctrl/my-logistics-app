@@ -184,8 +184,7 @@ with main_right:
 
     # --- OUTPUT MANAGEMENT FRAMEWORK ---
     st.markdown("---")
-    st.header("2. Choose Output Format Options")
-    output_choice = st.radio("Select Output Format Variant:", ["Visual Invoice Sheet (Form Look)", "Raw Excel Spreadsheet (.xlsx)"])
+    st.header("2. App Statement Output Sheets")
 
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
@@ -195,7 +194,6 @@ with main_right:
     totals_row = cursor.fetchone()
     conn.close()
 
-    # --- EXACT POSITION INDEX MAPPINGS FIXED ---
     subtotal = 0
     total_sscl = 0
     total_vat = 0
@@ -209,29 +207,39 @@ with main_right:
 
     has_non_vat_item = any("NON VAT" in r[1] for r in rows) if rows else False
 
-    # VARIANT 1: VISUAL NATIVE FORM LOOK
-    if output_choice == "Visual Invoice Sheet (Form Look)":
-        st.info(f"📄 **TAX INVOICE** | Serial No: {serial_no} | Purchases TIN: {purchaser_tin}")
-        st.write(f"**Customer Name:** {purchaser_name}")
-        st.write(f"**Billing Address:** {purchaser_addr}")
-        
-        table_data = []
-        if rows:
-            for row in rows:
-                r_id, r_cat, r_name, r_base, r_sscl, r_vat, r_tot = row
-                display_base = r_base + (int(math.ceil((r_base + r_sscl) * 0.18))) if "NON VAT" in r_cat else r_base
-                table_data.append({
-                    "Description of Goods or Services": f"{r_name} ({r_cat})",
-                    "Amount Excluding VAT (Rs.)": f"{int(display_base):,}.00"
-                })
-            st.table(table_data)
-        else:
-            st.info("The invoice sheet table is currently empty. Input details to populate rows.")
-        
-        st.markdown("---")
-        st.subheader("Summary Calculations")
-        
-        if has_non_vat_item:
-            display_subtotal = grand_final - total_sscl
-            display_vat = 0
-        else:
+    # --- PART A: ALWAYS VISIBLE FORM PREVIEW SHEET ---
+    st.info(f"📄 **TAX INVOICE** | Serial No: {serial_no} | Purchases TIN: {purchaser_tin}")
+    st.write(f"**Customer Name:** {purchaser_name}")
+    st.write(f"**Billing Address:** {purchaser_addr}")
+    
+    table_data = []
+    if rows:
+        for row in rows:
+            r_id, r_cat, r_name, r_base, r_sscl, r_vat, r_tot = row
+            display_base = r_base + (int(math.ceil((r_base + r_sscl) * 0.18))) if "NON VAT" in r_cat else r_base
+            table_data.append({
+                "Description of Goods or Services": f"{r_name} ({r_cat})",
+                "Amount Excluding VAT (Rs.)": f"{int(display_base):,}.00"
+            })
+        st.table(table_data)
+    else:
+        st.write("*No items added to invoice ledger list yet.*")
+    
+    st.markdown("---")
+    st.subheader("Summary Calculations")
+    
+    if has_non_vat_item:
+        display_subtotal = grand_final - total_sscl
+        display_vat = 0
+    else:
+        display_subtotal = subtotal
+        display_vat = total_vat
+
+    col_t1, col_t2 = st.columns(2)
+    with col_t1:
+        st.write("**Total Value of Supply:**")
+        st.write("**SSCL (2.5%):**")
+        st.write("**VAT Amount (18%):**")
+        st.markdown("## **Total Amount including VAT:**")
+    with col_t2:
+        st.write(f"LKR {display_subtotal:,}.00")
