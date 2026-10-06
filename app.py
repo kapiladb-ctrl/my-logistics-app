@@ -35,7 +35,6 @@ st.set_page_config(page_title="SLPA Tax Invoice Engine", layout="wide")
 #                         PASSWORD LOGIN SYSTEM
 # =====================================================================
 CORRECT_PASSWORD = "Logistics2026"
-
 if "authenticated" not in st.session_state:
     st.session_state["authenticated"] = False
 
@@ -67,6 +66,7 @@ for f in all_files:
 
 if top_banner_file:
     st.image(top_banner_file, use_container_width=True)  
+
 st.title("🚢 SLPA CHARGES - IMPORT FCL 🚢")
 st.markdown("---")
 
@@ -77,7 +77,7 @@ with main_left:
     st.header("📋 Header Metadata")
     serial_no = st.text_input("Serial No", value="xxxxx")
     purchaser_tin = st.text_input("Purchases TIN", value="xxxxxxxxx")
-    purchaser_name = st.text_input("Purchases Name", value="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
+    purchaser_name = st.text_input("Purchases Name", value="M/S. LANKA INTERNATIONAL PORT PVT LTD")
     purchaser_addr = st.text_area("Address", value="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
     
     st.markdown("---")
@@ -86,7 +86,6 @@ with main_left:
     st.markdown("---")
     st.subheader("🛠️ Maintenance Controls")
     
-    # PERMANENTLY UNHIDDEN CLEAR BUTTON
     if st.button("🗑️ Clear Current Invoice Sheet", type="secondary", use_container_width=True):
         conn = sqlite3.connect(DB_NAME)
         cursor = conn.cursor()
@@ -168,6 +167,8 @@ with main_right:
             
         sscl_raw = (amount_lkr / 97.5) * 2.5
         sscl_tax = int(math.ceil(sscl_raw))
+        
+        # Calculate full VAT regardless of category to allow for display re-routing
         vat_base = amount_lkr + sscl_tax
         calculated_vat = int(math.ceil(vat_base * 0.18))
         vat_column_value = calculated_vat if is_vat_visible else 0
@@ -206,6 +207,9 @@ with main_right:
         total_vat = int(totals_row[2])
         grand_final = int(totals_row[3])
 
+    # Dynamic flag checking if a Non-VAT entry exists in the current collection sheet
+    has_non_vat_item = any("NON VAT" in r[1] for r in rows) if rows else False
+
     if rows:
         # VARIANT 1: VISUAL NATIVE FORM LOOK
         if output_choice == "Visual Invoice Sheet (Form Look)":
@@ -216,27 +220,19 @@ with main_right:
             table_data = []
             for row in rows:
                 r_id, r_cat, r_name, r_base, r_sscl, r_vat, r_tot = row
+                # Re-route line item table display mapping according to category choice
+                display_base = r_base + (int(math.ceil((r_base + r_sscl) * 0.18))) if "NON VAT" in r_cat else r_base
                 table_data.append({
                     "Description of Goods or Services": f"{r_name} ({r_cat})",
-                    "Amount Excluding VAT (Rs.)": f"{int(r_base):,}.00"
+                    "Amount Excluding VAT (Rs.)": f"{int(display_base):,}.00"
                 })
             st.table(table_data)
             
             st.markdown("---")
-            col_t1, col_t2 = st.columns(2)
-            with col_t1:
-                st.write("**Total Value of Supply:**")
-                st.write("**SSCL (2.5%):**")
-                st.write("**VAT Amount (18%):**")
-                st.subheader("**Total Amount including VAT:**")
-            with col_t2:
-                st.write(f"LKR {subtotal:,}.00")
-                st.write(f"LKR {total_sscl:,}.00")
-                st.write(f"LKR {total_vat:,}.00")
-                st.subheader(f"LKR {grand_final:,}.00")
-
-        # VARIANT 2: RAW EXCEL DOWNLOAD
-        else:
-            export_raw_data = []
-            for row in rows:
-                r_id, r_cat, r_name, r_base, r_sscl, r_vat, r_tot = row
+            
+            # Dynamically balance summary metrics for clean cross-row mathematical addition
+            if has_non_vat_item:
+                display_subtotal = subtotal + total_vat
+                display_vat = 0
+            else:
+                display_subtotal = subtotal
