@@ -187,7 +187,6 @@ with main_right:
     st.header("2. Choose Output Format Options")
     output_choice = st.radio("Select Output Format Variant:", ["Visual Invoice Sheet (Form Look)", "Raw Excel Spreadsheet (.xlsx)"])
 
-    # --- BULLETPROOF RAW POSITION DATA PARSER ---
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
     cursor.execute("SELECT id, category, charge_name, amount_lkr, sscl_tax, vat_tax, grand_total FROM invoices")
@@ -196,6 +195,7 @@ with main_right:
     totals_row = cursor.fetchone()
     conn.close()
 
+    # --- FIXED EXPLICIT ARRAY INDEX EXTRACTOR ---
     subtotal = 0
     total_sscl = 0
     total_vat = 0
@@ -231,7 +231,6 @@ with main_right:
         st.markdown("---")
         st.subheader("Summary Calculations")
         
-        # --- MATHEMATICAL BALANCING ENGINE ---
         if has_non_vat_item:
             display_subtotal = grand_final - total_sscl
             display_vat = 0
@@ -239,3 +238,4 @@ with main_right:
             display_subtotal = subtotal
             display_vat = total_vat
 
+        # --- EXPLICIT TWO-COLUMN SPACING INITIALIZATION ---
