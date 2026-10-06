@@ -168,7 +168,6 @@ with main_right:
         sscl_raw = (amount_lkr / 97.5) * 2.5
         sscl_tax = int(math.ceil(sscl_raw))
         
-        # Calculate full VAT parameters regardless of flag setting for flexible re-routing display
         vat_base = amount_lkr + sscl_tax
         calculated_vat = int(math.ceil(vat_base * 0.18))
         vat_column_value = calculated_vat if is_vat_visible else 0
@@ -189,7 +188,7 @@ with main_right:
 
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM invoices")
+    cursor.execute("SELECT id, category, charge_name, amount_lkr, sscl_tax, vat_tax, grand_total FROM invoices")
     rows = cursor.fetchall()
     cursor.execute("SELECT SUM(amount_lkr), SUM(sscl_tax), SUM(vat_tax), SUM(grand_total) FROM invoices")
     totals_row = cursor.fetchone()
@@ -201,13 +200,12 @@ with main_right:
     total_vat = 0
     grand_final = 0
 
-    if totals_row and totals_row[0] is not None:
-        subtotal = int(totals_row[0])
-        total_sscl = int(totals_row[1])
-        total_vat = int(totals_row[2])
-        grand_final = int(totals_row[3])
+    if totals_row and totals_row is not None:
+        subtotal = int(totals_row[0]) if totals_row[0] is not None else 0
+        total_sscl = int(totals_row[1]) if totals_row[1] is not None else 0
+        total_vat = int(totals_row[2]) if totals_row[2] is not None else 0
+        grand_final = int(totals_row[3]) if totals_row[3] is not None else 0
 
-    # Dynamic flag checking if a Non-VAT entry exists in the current collection sheet
     has_non_vat_item = any("NON VAT" in r[1] for r in rows) if rows else False
 
     if rows:
@@ -220,7 +218,6 @@ with main_right:
             table_data = []
             for row in rows:
                 r_id, r_cat, r_name, r_base, r_sscl, r_vat, r_tot = row
-                # Re-route item line display: combine supply amount and vat value if flagged
                 display_base = r_base + (int(math.ceil((r_base + r_sscl) * 0.18))) if "NON VAT" in r_cat else r_base
                 table_data.append({
                     "Description of Goods or Services": f"{r_name} ({r_cat})",
@@ -231,8 +228,12 @@ with main_right:
             st.markdown("---")
             st.subheader("Summary Calculations")
             
-            # Dynamically balance display parameters for perfect matching addition rules
             if has_non_vat_item:
                 display_subtotal = subtotal + total_vat
                 display_vat = 0
             else:
+                display_subtotal = subtotal
+                display_vat = total_vat
+
+            col_t1, col_t2 = st.columns(2)
+            with col_t1:
